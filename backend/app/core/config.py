@@ -6,6 +6,8 @@ from pydantic_settings import BaseSettings
 
 
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+DEFAULT_DATABASE_PATH = os.path.join(BACKEND_DIR, "screening.db").replace("\\", "/")
+DEFAULT_DATABASE_URL = f"sqlite:///{DEFAULT_DATABASE_PATH}"
 
 
 class Settings(BaseSettings):
@@ -13,7 +15,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
 
-    DATABASE_URL: str = "sqlite:///./screening.db"
+    DATABASE_URL: str = DEFAULT_DATABASE_URL
     UPLOAD_DIR: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
 
     AI_PROVIDER: str = "openai"

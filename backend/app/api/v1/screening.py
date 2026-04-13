@@ -1,5 +1,6 @@
 import uuid
 import time
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -11,6 +12,73 @@ from app.schemas import ScreeningCreate, ScreeningResponse, ScreeningDetailRespo
 from app.services.ai_service import ai_service
 
 router = APIRouter(prefix="/screening", tags=["Screening"])
+
+
+def _screening_failed(screening: Screening) -> bool:
+    ai_analysis = screening.ai_analysis or {}
+    summary = ""
+    if isinstance(ai_analysis, dict):
+        summary = str(ai_analysis.get("summary", "")).lower()
+
+    weaknesses = screening.weaknesses or []
+    weakness_text = " ".join(str(item).lower() for item in weaknesses)
+
+    return (
+        screening.overall_score <= 0
+        and (
+            "ai screening failed" in summary
+            or "ai error" in weakness_text
+            or "ai provider error" in weakness_text
+            or "quota exceeded" in weakness_text
+            or "429" in weakness_text
+        )
+    )
+
+
+def _screening_provider_mismatch(screening: Screening) -> bool:
+    ai_analysis = screening.ai_analysis or {}
+    if not isinstance(ai_analysis, dict):
+        return False
+
+    meta = ai_analysis.get("_meta")
+    if not isinstance(meta, dict):
+        return False
+
+    current = ai_service.provider_metadata()
+    return (
+        meta.get("provider") != current.get("provider")
+        or meta.get("model") != current.get("model")
+    )
+
+
+def _apply_screening_result(screening: Screening, ai_result: dict, weights: dict) -> Screening:
+    skills_w = weights.get("skills", 0.35)
+    exp_w = weights.get("experience", 0.25)
+    edu_w = weights.get("education", 0.20)
+    cert_w = weights.get("certifications", 0.10)
+    fit_w = weights.get("overall_fit", 0.10)
+
+    overall_score = (
+        ai_result.get("skills_score", 0) * skills_w
+        + ai_result.get("experience_score", 0) * exp_w
+        + ai_result.get("education_score", 0) * edu_w
+        + ai_result.get("certification_score", 0) * cert_w
+        + ai_result.get("overall_fit_score", 0) * fit_w
+    )
+
+    screening.overall_score = round(overall_score, 1)
+    screening.skills_score = ai_result.get("skills_score", 0)
+    screening.experience_score = ai_result.get("experience_score", 0)
+    screening.education_score = ai_result.get("education_score", 0)
+    screening.certification_score = ai_result.get("certification_score", 0)
+    screening.ai_analysis = ai_result
+    screening.strengths = ai_result.get("strengths", [])
+    screening.weaknesses = ai_result.get("weaknesses", [])
+    screening.red_flags = ai_result.get("red_flags", [])
+    screening.matched_skills = ai_result.get("matched_skills", [])
+    screening.missing_skills = ai_result.get("missing_skills", [])
+    screening.screening_date = datetime.utcnow()
+    return screening
 
 
 @router.post("", response_model=list[ScreeningResponse], status_code=201)
@@ -43,7 +111,11 @@ def create_screening(data: ScreeningCreate, db: Session = Depends(get_db)):
             .filter(Screening.candidate_id == candidate_id, Screening.job_description_id == data.job_description_id)
             .first()
         )
-        if existing:
+        should_refresh_existing = bool(existing) and (
+            _screening_failed(existing) or _screening_provider_mismatch(existing)
+        )
+
+        if existing and not should_refresh_existing:
             results.append(existing)
             continue
 
@@ -56,37 +128,18 @@ def create_screening(data: ScreeningCreate, db: Session = Depends(get_db)):
             raise HTTPException(status_code=500, detail=f"AI screening failed for {candidate.name}: {str(e)}")
 
         weights = jd_data.get("criteria_weights", {})
-        skills_w = weights.get("skills", 0.35)
-        exp_w = weights.get("experience", 0.25)
-        edu_w = weights.get("education", 0.20)
-        cert_w = weights.get("certifications", 0.10)
-        fit_w = weights.get("overall_fit", 0.10)
-
-        overall_score = (
-            ai_result.get("skills_score", 0) * skills_w
-            + ai_result.get("experience_score", 0) * exp_w
-            + ai_result.get("education_score", 0) * edu_w
-            + ai_result.get("certification_score", 0) * cert_w
-            + ai_result.get("overall_fit_score", 0) * fit_w
-        )
-
-        screening = Screening(
-            id=str(uuid.uuid4()),
-            candidate_id=candidate_id,
-            job_description_id=data.job_description_id,
-            overall_score=round(overall_score, 1),
-            skills_score=ai_result.get("skills_score", 0),
-            experience_score=ai_result.get("experience_score", 0),
-            education_score=ai_result.get("education_score", 0),
-            certification_score=ai_result.get("certification_score", 0),
-            ai_analysis=ai_result,
-            strengths=ai_result.get("strengths", []),
-            weaknesses=ai_result.get("weaknesses", []),
-            red_flags=ai_result.get("red_flags", []),
-            matched_skills=ai_result.get("matched_skills", []),
-            missing_skills=ai_result.get("missing_skills", []),
-        )
-        db.add(screening)
+        if existing:
+            screening = _apply_screening_result(existing, ai_result, weights)
+            for question in list(screening.interview_questions):
+                db.delete(question)
+        else:
+            screening = Screening(
+                id=str(uuid.uuid4()),
+                candidate_id=candidate_id,
+                job_description_id=data.job_description_id,
+            )
+            _apply_screening_result(screening, ai_result, weights)
+            db.add(screening)
         results.append(screening)
 
     db.commit()

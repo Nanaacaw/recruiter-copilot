@@ -66,6 +66,29 @@ class AIService:
 
         return self._provider
 
+    def _configured_model_name(self) -> str:
+        provider_type = settings.AI_PROVIDER.lower().strip()
+        if provider_type == "gemini":
+            return settings.GEMINI_MODEL
+        if provider_type == "openai":
+            return settings.OPENAI_MODEL
+        if provider_type == "claude":
+            return settings.CLAUDE_MODEL
+        if provider_type == "ollama":
+            return settings.OLLAMA_MODEL
+        return "unknown"
+
+    def provider_metadata(self) -> dict:
+        return {
+            "provider": settings.AI_PROVIDER.lower().strip(),
+            "model": self._configured_model_name(),
+        }
+
+    def _attach_metadata(self, result: dict) -> dict:
+        enriched = dict(result or {})
+        enriched["_meta"] = self.provider_metadata()
+        return enriched
+
     def screen_cv(self, cv_data: dict, jd_data: dict) -> dict:
         cv_text = cv_data.get("raw_text", "") if isinstance(cv_data, dict) else str(cv_data)
 
@@ -109,15 +132,16 @@ class AIService:
         jd_text = "\n".join(jd_parts)
 
         try:
-            return self._get_provider().screen_cv(cv_text, jd_text)
+            result = self._get_provider().screen_cv(cv_text, jd_text)
+            return self._attach_metadata(result)
         except Exception as e:
-            return {
+            return self._attach_metadata({
                 "skills_score": 0, "experience_score": 0, "education_score": 0,
                 "certification_score": 0, "overall_fit_score": 0, "overall_score": 0,
                 "strengths": [], "weaknesses": [f"AI provider error: {str(e)}"],
                 "red_flags": [], "matched_skills": [], "missing_skills": [],
                 "summary": f"AI screening failed: {str(e)}"
-            }
+            })
 
     def generate_interview_questions(
         self, cv_data: dict, jd_data: dict, screening_data: dict, count: int = 10, difficulty: str = "medium"
