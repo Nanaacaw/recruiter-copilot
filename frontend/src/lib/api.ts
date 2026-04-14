@@ -1,4 +1,11 @@
-import type { Candidate, HealthStatus, InterviewQuestion, JobDescription, Screening } from "@/types";
+import type {
+  Candidate,
+  HealthStatus,
+  InterviewLanguage,
+  InterviewQuestion,
+  JobDescription,
+  Screening,
+} from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -100,13 +107,21 @@ class ApiClient {
     });
 
   // Interview Questions
-  generateQuestions = (screeningId: string, count = 10, difficulty = "medium") =>
+  generateQuestions = (
+    screeningId: string,
+    options?: { count?: number; difficulty?: string; language?: InterviewLanguage }
+  ) =>
     this.request<InterviewQuestion[]>("/interview/generate", {
       method: "POST",
-      body: JSON.stringify({ screening_id: screeningId, count, difficulty }),
+      body: JSON.stringify({
+        screening_id: screeningId,
+        count: options?.count ?? 10,
+        difficulty: options?.difficulty ?? "medium",
+        language: options?.language ?? "en",
+      }),
     });
-  getQuestions = (screeningId: string) =>
-    this.request<InterviewQuestion[]>(`/interview/${screeningId}`);
+  getQuestions = (screeningId: string, language: InterviewLanguage = "en") =>
+    this.request<InterviewQuestion[]>(`/interview/${screeningId}?language=${language}`);
 
   // Export
   exportPdf = (screeningId: string) =>

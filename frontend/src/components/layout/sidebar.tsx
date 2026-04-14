@@ -36,10 +36,10 @@ const providerLabels: Record<string, string> = {
 };
 
 const providerColors: Record<string, string> = {
-  gemini: "from-blue-500 to-cyan-400",
-  openai: "from-emerald-500 to-teal-400",
-  claude: "from-orange-500 to-amber-400",
-  ollama: "from-purple-500 to-pink-400",
+  gemini: "from-sky-400 to-blue-500",
+  openai: "from-cyan-400 to-blue-500",
+  claude: "from-amber-400 to-orange-500",
+  ollama: "from-blue-400 to-indigo-500",
 };
 
 export function Sidebar() {
@@ -67,37 +67,40 @@ export function Sidebar() {
   const backendHealthy = aiStatus?.status === "healthy";
 
   return (
-    <aside
-      className="fixed left-0 top-0 z-40 flex h-screen w-72 flex-col"
-      style={{ background: "linear-gradient(180deg, #081126 0%, #102145 46%, #163871 100%)" }}
-    >
-      <div className="border-b border-white/10 px-6 py-5">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-72 flex-col overflow-hidden border-r border-sky-100/90 bg-[linear-gradient(180deg,rgba(250,252,255,0.98),rgba(237,246,255,0.98))]">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 blueprint-grid opacity-55" />
+        <div className="absolute left-0 top-0 h-64 w-64 rounded-full bg-sky-200/40 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-blue-200/30 blur-3xl" />
+      </div>
+
+      <div className="relative border-b border-sky-100/90 px-6 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12 shadow-inner shadow-cyan-200/10">
-            <Sparkles className="h-5 w-5 text-cyan-200" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 shadow-lg shadow-sky-200/80">
+            <Sparkles className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-white">AI Screening</h1>
-            <p className="text-[11px] font-medium text-sky-200/80">Copilot Workspace</p>
+            <h1 className="text-lg font-bold tracking-tight text-slate-900">AI Screening</h1>
+            <p className="text-[11px] font-medium text-slate-500">Copilot Workspace</p>
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-white/10 bg-white/6 p-3">
-          <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-sky-200/70">
+        <div className="sky-card mt-4 rounded-2xl p-3">
+          <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-slate-500">
             <span>Runtime</span>
-            <span className={backendHealthy ? "text-emerald-300" : "text-amber-300"}>
+            <span className={backendHealthy ? "text-emerald-600" : "text-amber-600"}>
               {backendHealthy ? "Live" : "Unknown"}
             </span>
           </div>
           <div className="mt-2 flex items-center gap-2">
-            <div className={`h-2 w-2 rounded-full ${backendHealthy ? "bg-emerald-300" : "bg-amber-300"}`} />
-            <p className="text-sm font-semibold text-white">{providerLabel}</p>
+            <div className={`h-2 w-2 rounded-full ${backendHealthy ? "bg-emerald-500" : "bg-amber-500"}`} />
+            <p className="text-sm font-semibold text-slate-900">{providerLabel}</p>
           </div>
-          <p className="mt-1 text-[11px] text-sky-200/75">{aiStatus?.ai_model || "qwen2.5:7b"}</p>
+          <p className="mt-1 text-[11px] text-slate-500">{aiStatus?.ai_model || "qwen2.5:7b"}</p>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
+      <nav className="relative flex-1 space-y-1 p-4 overflow-y-auto">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -110,32 +113,32 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-white/14 text-white shadow-lg shadow-slate-950/35 ring-1 ring-white/10"
-                  : "text-sky-100/78 hover:bg-white/7 hover:text-white"
+                  ? "bg-white text-slate-900 shadow-lg shadow-sky-100/90 ring-1 ring-sky-100"
+                  : "text-slate-600 hover:bg-white/70 hover:text-slate-900"
               )}
             >
               <item.icon
-                className={cn("h-[18px] w-[18px]", isActive ? "text-cyan-300" : "text-sky-200/55")}
+                className={cn("h-[18px] w-[18px]", isActive ? "text-blue-600" : "text-slate-400")}
               />
               {item.label}
-              {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-cyan-300" />}
+              {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-500" />}
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-white/10 p-4">
-        <div className="rounded-2xl border border-white/10 bg-white/8 p-4">
-          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-sky-200/70">
+      <div className="relative border-t border-sky-100/90 p-4">
+        <div className="sky-card rounded-2xl p-4">
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
             <ShieldCheck className="h-3.5 w-3.5" />
             AI Control
           </div>
-          <p className="mt-2 text-sm font-semibold text-white">{providerLabel}</p>
-          <p className="text-[11px] text-sky-200/75">{aiStatus?.ai_model || "qwen2.5:7b"}</p>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <p className="mt-2 text-sm font-semibold text-slate-900">{providerLabel}</p>
+          <p className="text-[11px] text-slate-500">{aiStatus?.ai_model || "qwen2.5:7b"}</p>
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-sky-100">
             <div className={cn("h-full w-2/3 rounded-full bg-gradient-to-r", providerColor)} />
           </div>
-          <p className="mt-2 text-[10px] text-sky-200/55">
+          <p className="mt-2 text-[10px] text-slate-500">
             Current workspace status and provider mapping.
           </p>
         </div>

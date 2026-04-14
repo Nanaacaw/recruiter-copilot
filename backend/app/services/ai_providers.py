@@ -69,7 +69,13 @@ class BaseAIProvider(ABC):
 
     @abstractmethod
     def generate_interview_questions(
-        self, cv_text: str, jd_title: str, screening_result: dict, count: int, difficulty: str
+        self,
+        cv_text: str,
+        jd_title: str,
+        screening_result: dict,
+        count: int,
+        difficulty: str,
+        language: str = "en",
     ) -> list[dict]:
         pass
 
@@ -102,6 +108,17 @@ class BaseAIProvider(ABC):
             return text[start:end]
         return text if not strict else ""
 
+    def _interview_language_instruction(self, language: str) -> str:
+        if str(language).lower().strip() == "id":
+            return (
+                "Write `question`, `focus_area`, and `evaluation_criteria` in Bahasa Indonesia. "
+                "Keep `category` values exactly as technical, behavioral, or situational."
+            )
+        return (
+            "Write `question`, `focus_area`, and `evaluation_criteria` in English. "
+            "Keep `category` values exactly as technical, behavioral, or situational."
+        )
+
 
 class GeminiProvider(BaseAIProvider):
     name = "gemini"
@@ -127,9 +144,15 @@ class GeminiProvider(BaseAIProvider):
             return self._error_result(str(e))
 
     def generate_interview_questions(
-        self, cv_text: str, jd_title: str, screening_result: dict, count: int, difficulty: str
+        self,
+        cv_text: str,
+        jd_title: str,
+        screening_result: dict,
+        count: int,
+        difficulty: str,
+        language: str = "en",
     ) -> list[dict]:
-        prompt = self._build_interview_prompt(cv_text, jd_title, screening_result, count, difficulty)
+        prompt = self._build_interview_prompt(cv_text, jd_title, screening_result, count, difficulty, language)
         try:
             response = self._run_with_retries(lambda: self.model.generate_content(prompt))
             return self._parse_questions_response(response.text)
@@ -165,7 +188,13 @@ Respond with ONLY valid JSON in this exact format (no markdown, no explanation):
 }}"""
 
     def _build_interview_prompt(
-        self, cv_text: str, jd_title: str, screening_result: dict, count: int, difficulty: str
+        self,
+        cv_text: str,
+        jd_title: str,
+        screening_result: dict,
+        count: int,
+        difficulty: str,
+        language: str,
     ) -> str:
         return f"""You are an expert interviewer for the position: {jd_title}
 
@@ -181,6 +210,7 @@ Respond with ONLY valid JSON in this exact format (no markdown, no explanation):
 - Red Flags: {json.dumps(screening_result.get('red_flags', []))}
 
 Generate {count} interview questions at {difficulty} difficulty level. Focus on probing areas where the candidate has gaps or weaknesses.
+{self._interview_language_instruction(language)}
 
 Respond with ONLY valid JSON array (no markdown, no explanation):
 [
@@ -310,9 +340,15 @@ class OpenAIProvider(BaseAIProvider):
             return self._error_result(str(e))
 
     def generate_interview_questions(
-        self, cv_text: str, jd_title: str, screening_result: dict, count: int, difficulty: str
+        self,
+        cv_text: str,
+        jd_title: str,
+        screening_result: dict,
+        count: int,
+        difficulty: str,
+        language: str = "en",
     ) -> list[dict]:
-        prompt = self._build_interview_prompt(cv_text, jd_title, screening_result, count, difficulty)
+        prompt = self._build_interview_prompt(cv_text, jd_title, screening_result, count, difficulty, language)
         try:
             text = self._run_with_retries(lambda: self._chat_completion(prompt, temperature=0.5, max_tokens=3000))
             return self._parse_questions(text)
@@ -345,7 +381,13 @@ Respond with ONLY valid JSON (no markdown, no explanation):
 }}"""
 
     def _build_interview_prompt(
-        self, cv_text: str, jd_title: str, screening_result: dict, count: int, difficulty: str
+        self,
+        cv_text: str,
+        jd_title: str,
+        screening_result: dict,
+        count: int,
+        difficulty: str,
+        language: str,
     ) -> str:
         return f"""Generate {count} interview questions at {difficulty} difficulty for position: {jd_title}
 
@@ -353,6 +395,7 @@ Candidate profile: {cv_text[:2000]}
 Screening: skills={screening_result.get('skills_score', 0)}, exp={screening_result.get('experience_score', 0)}
 Weaknesses: {screening_result.get('weaknesses', [])}
 Missing: {screening_result.get('missing_skills', [])}
+Language instruction: {self._interview_language_instruction(language)}
 
 Respond with ONLY valid JSON array:
 [
@@ -462,9 +505,15 @@ class ClaudeProvider(BaseAIProvider):
             return self._error_result(str(e))
 
     def generate_interview_questions(
-        self, cv_text: str, jd_title: str, screening_result: dict, count: int, difficulty: str
+        self,
+        cv_text: str,
+        jd_title: str,
+        screening_result: dict,
+        count: int,
+        difficulty: str,
+        language: str = "en",
     ) -> list[dict]:
-        prompt = self._build_interview_prompt(cv_text, jd_title, screening_result, count, difficulty)
+        prompt = self._build_interview_prompt(cv_text, jd_title, screening_result, count, difficulty, language)
         try:
             response = self._run_with_retries(
                 lambda: self.client.messages.create(
@@ -503,7 +552,13 @@ Respond with ONLY valid JSON (no markdown):
 }}"""
 
     def _build_interview_prompt(
-        self, cv_text: str, jd_title: str, screening_result: dict, count: int, difficulty: str
+        self,
+        cv_text: str,
+        jd_title: str,
+        screening_result: dict,
+        count: int,
+        difficulty: str,
+        language: str,
     ) -> str:
         return f"""Generate {count} interview questions at {difficulty} difficulty for: {jd_title}
 
@@ -511,6 +566,7 @@ Candidate: {cv_text[:2000]}
 Scores: skills={screening_result.get('skills_score', 0)}, exp={screening_result.get('experience_score', 0)}
 Gaps: {screening_result.get('weaknesses', [])}
 Missing: {screening_result.get('missing_skills', [])}
+Language instruction: {self._interview_language_instruction(language)}
 
 JSON array only:
 [
@@ -629,9 +685,15 @@ class OllamaProvider(BaseAIProvider):
             return self._error_result(str(e))
 
     def generate_interview_questions(
-        self, cv_text: str, jd_title: str, screening_result: dict, count: int, difficulty: str
+        self,
+        cv_text: str,
+        jd_title: str,
+        screening_result: dict,
+        count: int,
+        difficulty: str,
+        language: str = "en",
     ) -> list[dict]:
-        prompt = self._build_interview_prompt(cv_text, jd_title, screening_result, count, difficulty)
+        prompt = self._build_interview_prompt(cv_text, jd_title, screening_result, count, difficulty, language)
         try:
             text = self._run_with_retries(lambda: self._generate(prompt))
             return self._parse_questions(text)
@@ -664,13 +726,20 @@ Respond with ONLY valid JSON:
 }}"""
 
     def _build_interview_prompt(
-        self, cv_text: str, jd_title: str, screening_result: dict, count: int, difficulty: str
+        self,
+        cv_text: str,
+        jd_title: str,
+        screening_result: dict,
+        count: int,
+        difficulty: str,
+        language: str,
     ) -> str:
         return f"""Generate {count} interview questions at {difficulty} difficulty for: {jd_title}
 
 Candidate: {cv_text[:2000]}
 Gaps: {screening_result.get('weaknesses', [])}
 Missing: {screening_result.get('missing_skills', [])}
+Language instruction: {self._interview_language_instruction(language)}
 
 JSON array:
 [

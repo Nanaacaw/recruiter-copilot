@@ -4,6 +4,8 @@ This folder contains the operational and technical documentation for `ai_screeni
 
 ## Document Map
 
+- [build-phases.md](./build-phases.md)
+  Phase-by-phase guide for rebuilding this project from zero in a sensible learning order.
 - [architecture.md](./architecture.md)
   High-level system architecture, component responsibilities, and deployment shape.
 - [system-flows.md](./system-flows.md)
@@ -29,8 +31,9 @@ This folder contains the operational and technical documentation for `ai_screeni
 
 ## Suggested Reading Order
 
-1. Start with [architecture.md](./architecture.md)
-2. Continue to [system-flows.md](./system-flows.md)
-3. Use [database.md](./database.md) and [api-reference.md](./api-reference.md) during implementation
-4. Read [ai-integration.md](./ai-integration.md) before changing provider or model behavior
-5. Read [repository-notes.md](./repository-notes.md) before pushing Git changes involving `frontend/`
+1. Start with [build-phases.md](./build-phases.md) if your goal is to learn how to build this project step by step
+2. Continue to [architecture.md](./architecture.md) to understand the final target state
+3. Read [system-flows.md](./system-flows.md) to connect product behavior with API flow
+4. Use [database.md](./database.md) and [api-reference.md](./api-reference.md) during implementation
+5. Read [ai-integration.md](./ai-integration.md) before changing provider or model behavior
+6. Read [repository-notes.md](./repository-notes.md) before pushing Git changes involving `frontend/`

@@ -53,6 +53,8 @@ export interface HealthStatus {
   ai_model: string;
 }
 
+export type InterviewLanguage = "en" | "id";
+
 export interface JobDescription {
   id: string;
   title: string;
@@ -107,6 +109,7 @@ export interface Screening {
 export interface InterviewQuestion {
   id: string;
   screening_id: string;
+  language: InterviewLanguage;
   question: string;
   category: "technical" | "behavioral" | "situational";
   difficulty: "easy" | "medium" | "hard";

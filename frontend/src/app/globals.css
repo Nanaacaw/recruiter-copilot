@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-plus-jakarta-sans);
+  --font-mono: var(--font-plex-mono);
+  --font-heading: var(--font-plus-jakarta-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,63 +49,70 @@
 }
 
 :root {
-  --background: oklch(0.98 0.002 260);
-  --foreground: oklch(0.16 0.02 260);
+  --background: oklch(0.985 0.003 255);
+  --foreground: oklch(0.17 0.02 255);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0.02 260);
+  --card-foreground: oklch(0.17 0.02 255);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0.02 260);
-  --primary: oklch(0.55 0.2 260);
+  --popover-foreground: oklch(0.17 0.02 255);
+  --primary: oklch(0.56 0.16 254);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.95 0.01 260);
-  --secondary-foreground: oklch(0.25 0.02 260);
-  --muted: oklch(0.95 0.008 260);
-  --muted-foreground: oklch(0.50 0.02 260);
-  --accent: oklch(0.94 0.015 260);
-  --accent-foreground: oklch(0.25 0.02 260);
+  --secondary: oklch(0.96 0.008 255);
+  --secondary-foreground: oklch(0.28 0.02 255);
+  --muted: oklch(0.96 0.008 255);
+  --muted-foreground: oklch(0.52 0.02 255);
+  --accent: oklch(0.95 0.01 255);
+  --accent-foreground: oklch(0.28 0.02 255);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.91 0.008 260);
-  --input: oklch(0.91 0.008 260);
-  --ring: oklch(0.55 0.2 260);
-  --chart-1: oklch(0.55 0.2 260);
+  --border: oklch(0.91 0.008 255);
+  --input: oklch(0.91 0.008 255);
+  --ring: oklch(0.56 0.16 254);
+  --chart-1: oklch(0.56 0.16 254);
   --chart-2: oklch(0.65 0.18 160);
   --chart-3: oklch(0.60 0.22 30);
   --chart-4: oklch(0.70 0.15 300);
   --chart-5: oklch(0.50 0.15 200);
   --radius: 0.75rem;
-  --sidebar: oklch(0.18 0.03 260);
-  --sidebar-foreground: oklch(0.92 0.01 260);
-  --sidebar-primary: oklch(0.55 0.2 260);
+  --sidebar: oklch(0.97 0.01 250);
+  --sidebar-foreground: oklch(0.24 0.03 250);
+  --sidebar-primary: oklch(0.60 0.14 250);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.25 0.04 260);
-  --sidebar-accent-foreground: oklch(0.92 0.01 260);
-  --sidebar-border: oklch(0.30 0.03 260);
-  --sidebar-ring: oklch(0.55 0.2 260);
+  --sidebar-accent: oklch(0.93 0.02 250);
+  --sidebar-accent-foreground: oklch(0.26 0.03 250);
+  --sidebar-border: oklch(0.90 0.01 250);
+  --sidebar-ring: oklch(0.60 0.14 250);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-    background:
-      radial-gradient(circle at top left, rgba(59, 130, 246, 0.10), transparent 22%),
-      radial-gradient(circle at 18% 24%, rgba(16, 185, 129, 0.08), transparent 18%),
-      radial-gradient(circle at 85% 10%, rgba(244, 114, 182, 0.08), transparent 20%),
-      linear-gradient(180deg, #f8fbff 0%, #eef5ff 48%, #f8fafc 100%);
-  }
   html {
     @apply font-sans;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv11" 1, "ss01" 1;
+    letter-spacing: -0.01em;
+    background:
+      radial-gradient(circle at top left, rgba(96, 165, 250, 0.16), transparent 25%),
+      radial-gradient(circle at 20% 24%, rgba(191, 219, 254, 0.35), transparent 19%),
+      radial-gradient(circle at 88% 10%, rgba(56, 189, 248, 0.10), transparent 24%),
+      linear-gradient(180deg, #fcfeff 0%, #f2f8ff 44%, #f8fbff 100%);
+  }
+  h1, h2, h3, h4 {
+    @apply font-heading;
+    letter-spacing: -0.03em;
   }
 }
 
 @layer utilities {
   .gradient-blue {
-    background: linear-gradient(135deg, #6366f1, #3b82f6, #06b6d4);
+    background: linear-gradient(135deg, #7dd3fc, #60a5fa, #2563eb);
   }
   .gradient-green {
-    background: linear-gradient(135deg, #10b981, #06b6d4);
+    background: linear-gradient(135deg, #67e8f9, #38bdf8, #0ea5e9);
   }
   .gradient-purple {
     background: linear-gradient(135deg, #8b5cf6, #6366f1);
@@ -123,22 +130,54 @@
     border: 1px solid rgba(255,255,255,0.3);
   }
   .soft-panel {
-    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.84));
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.92));
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(226,232,240,0.8);
-    box-shadow: 0 18px 60px rgba(15,23,42,0.08);
+    border: 1px solid rgba(219,234,254,0.95);
+    box-shadow: 0 18px 54px rgba(59,130,246,0.10);
   }
   .hero-mesh {
     background:
-      radial-gradient(circle at top left, rgba(99,102,241,0.16), transparent 26%),
-      radial-gradient(circle at bottom right, rgba(20,184,166,0.14), transparent 24%),
-      linear-gradient(135deg, rgba(255,255,255,0.94), rgba(255,255,255,0.82));
+      radial-gradient(circle at top left, rgba(147,197,253,0.34), transparent 26%),
+      radial-gradient(circle at bottom right, rgba(125,211,252,0.20), transparent 24%),
+      linear-gradient(135deg, rgba(255,255,255,0.98), rgba(243,248,255,0.94));
+  }
+  .blueprint-grid {
+    background-image:
+      linear-gradient(rgba(148,163,184,0.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .sky-card {
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.98), rgba(239,246,255,0.92));
+    border: 1px solid rgba(191,219,254,0.9);
+    box-shadow: 0 16px 40px rgba(96,165,250,0.12);
+  }
+  .airy-outline {
+    border: 1px solid rgba(191,219,254,0.8);
+    background: rgba(255,255,255,0.82);
+  }
+  .soft-blue-chip {
+    background: rgba(239,246,255,0.95);
+    border: 1px solid rgba(191,219,254,0.9);
+    color: #1d4ed8;
   }
   .score-ring {
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  .page-shell {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 92rem;
+    padding: 2rem 1.5rem 2.5rem;
+  }
+  @media (min-width: 1024px) {
+    .page-shell {
+      padding-inline: 2rem;
+    }
   }
 }

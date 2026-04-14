@@ -69,6 +69,7 @@ class InterviewQuestion(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     screening_id = Column(String, ForeignKey("screenings.id", ondelete="CASCADE"), nullable=False)
+    language = Column(String(10), default="en")
     question = Column(Text, nullable=False)
     category = Column(String(50), default="technical")
     difficulty = Column(String(20), default="medium")

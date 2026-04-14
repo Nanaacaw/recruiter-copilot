@@ -2,10 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.database import engine, Base
+from app.core.database import engine, Base, run_startup_migrations
 from app.api.v1 import api_router
 
 Base.metadata.create_all(bind=engine)
+run_startup_migrations()
 
 app = FastAPI(
     title=settings.APP_NAME,

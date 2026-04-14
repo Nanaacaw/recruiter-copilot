@@ -75,13 +75,14 @@ export function AppTopbar() {
   }, []);
 
   return (
-    <div className="sticky top-0 z-30 border-b border-white/60 bg-white/70 backdrop-blur-xl">
+    <div className="sticky top-0 z-30 border-b border-sky-100/90 bg-white/78 backdrop-blur-xl">
       <div className="relative overflow-hidden px-8 py-5">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(15,118,110,0.08),transparent_35%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_30%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(125,211,252,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(96,165,250,0.14),transparent_28%)]" />
+        <div className="absolute inset-0 blueprint-grid opacity-40" />
         <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.24em] text-slate-500 shadow-sm">
-              <Orbit className="h-3.5 w-3.5 text-teal-600" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/90 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.24em] text-slate-500 shadow-sm">
+              <Orbit className="h-3.5 w-3.5 text-blue-600" />
               System Workspace
             </div>
             <div>
@@ -91,7 +92,7 @@ export function AppTopbar() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Badge className="rounded-full border-0 bg-slate-900 px-3 py-1.5 text-white">
+            <Badge className="rounded-full border border-sky-100 bg-white px-3 py-1.5 text-slate-700">
               <Workflow className="mr-1.5 h-3.5 w-3.5" />
               Recruiter Flow
             </Badge>
@@ -99,7 +100,7 @@ export function AppTopbar() {
               <Activity className="mr-1.5 h-3.5 w-3.5" />
               {health?.status === "healthy" ? "Backend Healthy" : "Backend Status Unknown"}
             </Badge>
-            <Badge className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-cyan-700">
+            <Badge className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-sky-700">
               <Bot className="mr-1.5 h-3.5 w-3.5" />
               {(health?.ai_provider || "openai").toUpperCase()} / {health?.ai_model || "qwen2.5:7b"}
             </Badge>

@@ -1,17 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import type { DragEvent } from "react";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -19,8 +12,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
-import { Upload, Trash2, Eye, UserCircle, FileUp, Mail, Phone } from "lucide-react";
 import type { Candidate } from "@/types";
+import {
+  Eye,
+  FileText,
+  FileUp,
+  Mail,
+  Phone,
+  Sparkles,
+  Trash2,
+  Upload,
+  UserCircle,
+} from "lucide-react";
 
 export default function CandidatesPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -30,158 +33,333 @@ export default function CandidatesPage() {
   const [dragActive, setDragActive] = useState(false);
 
   const loadCandidates = async () => {
-    try { const data = await api.getCandidates(); setCandidates(data); } catch {} finally { setLoading(false); }
+    try {
+      const data = await api.getCandidates();
+      setCandidates(data);
+    } catch {
+      setCandidates([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { loadCandidates(); }, []);
+  useEffect(() => {
+    loadCandidates();
+  }, []);
 
   const handleUpload = async (files: FileList | File[]) => {
-    const validFiles = Array.from(files).filter((f) => f.name.endsWith(".pdf") || f.name.endsWith(".docx"));
-    if (validFiles.length === 0) { alert("Please upload PDF or DOCX files only"); return; }
+    const validFiles = Array.from(files).filter(
+      (file) => file.name.endsWith(".pdf") || file.name.endsWith(".docx")
+    );
+
+    if (validFiles.length === 0) {
+      alert("Please upload PDF or DOCX files only");
+      return;
+    }
+
     setUploading(true);
-    try { await api.uploadCVs(validFiles); loadCandidates(); } catch (err: any) { alert(err.message); } finally { setUploading(false); }
+    try {
+      await api.uploadCVs(validFiles);
+      loadCandidates();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message);
+      }
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this candidate?")) return;
-    try { await api.deleteCandidate(id); loadCandidates(); } catch (err: any) { alert(err.message); }
+    try {
+      await api.deleteCandidate(id);
+      loadCandidates();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message);
+      }
+    }
   };
 
-  const handleDrag = useCallback((e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    setDragActive(e.type === "dragenter" || e.type === "dragover");
-  }, []);
+  const handleDragState = (active: boolean) => (event: DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setDragActive(active);
+  };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation(); setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) handleUpload(e.dataTransfer.files);
-  }, []);
+  const handleDrop = (event: DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setDragActive(false);
+    if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+      handleUpload(event.dataTransfer.files);
+    }
+  };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center gap-3 mb-8">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-green">
-          <UserCircle className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Candidates</h1>
-          <p className="text-slate-500 text-sm">Upload and manage candidate CVs</p>
-        </div>
-      </div>
+    <div className="page-shell">
+      <section className="relative overflow-hidden rounded-[2.25rem] border border-sky-100/90 bg-white/90 shadow-[0_24px_70px_rgba(96,165,250,0.16)]">
+        <div className="absolute inset-0 hero-mesh" />
+        <div className="absolute inset-0 blueprint-grid opacity-50" />
+        <div className="relative grid gap-6 p-6 xl:grid-cols-[1.18fr_0.82fr] lg:p-8">
+          <div className="space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/90 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
+              <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+              Candidate inbox
+            </div>
 
-      <div
-        onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
-        className={`rounded-2xl border-2 border-dashed p-10 text-center transition-all duration-300 mb-8 ${
-          dragActive ? "border-indigo-400 bg-indigo-50/50 scale-[1.01]" : "border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/20"
-        }`}
-      >
-        <div className={`flex h-16 w-16 items-center justify-center rounded-2xl mx-auto mb-4 transition-colors ${dragActive ? "bg-indigo-100" : "bg-slate-100"}`}>
-          <FileUp className={`h-8 w-8 ${dragActive ? "text-indigo-500" : "text-slate-400"}`} />
+            <div>
+              <h1 className="max-w-4xl text-3xl font-semibold text-slate-900 md:text-4xl">
+                A lighter inbox for collecting CVs, checking parse quality, and keeping inbound talent organized.
+              </h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
+                The visual structure is simpler now: one upload zone, clear volume stats, and candidate cards that are easier to scan than a dense table.
+              </p>
+            </div>
+
+            <div
+              onDragEnter={handleDragState(true)}
+              onDragLeave={handleDragState(false)}
+              onDragOver={handleDragState(true)}
+              onDrop={handleDrop}
+              className={`rounded-[1.85rem] border-2 border-dashed p-7 transition-all duration-300 ${
+                dragActive
+                  ? "border-sky-400 bg-sky-50/80 shadow-lg shadow-sky-100"
+                  : "border-sky-100 bg-white/86"
+              }`}
+            >
+              <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+                <div className="space-y-3">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 shadow-lg shadow-sky-200">
+                    <FileUp className="h-7 w-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-semibold text-slate-900">Upload candidate CVs</p>
+                    <p className="mt-2 text-sm leading-7 text-slate-500">
+                      Drag PDF or DOCX files here, or browse manually. The parser will store raw text so the screening engine can reuse it later.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-sky-100 bg-white/92 p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Profiles</p>
+                      <p className="mt-2 text-2xl font-semibold text-slate-900">{loading ? 0 : candidates.length}</p>
+                    </div>
+                    <div className="rounded-2xl border border-sky-100 bg-white/92 p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Formats</p>
+                      <p className="mt-2 text-2xl font-semibold text-slate-900">PDF</p>
+                    </div>
+                    <div className="rounded-2xl border border-sky-100 bg-white/92 p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Fallback</p>
+                      <p className="mt-2 text-2xl font-semibold text-slate-900">DOCX</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <label>
+                      <input
+                        id="cv-upload"
+                        type="file"
+                        multiple
+                        accept=".pdf,.docx"
+                        className="hidden"
+                        onChange={(event) => event.target.files && handleUpload(event.target.files)}
+                      />
+                      <Button
+                        disabled={uploading}
+                        className="h-12 rounded-2xl gradient-blue border-0 px-5 text-white shadow-lg shadow-sky-200"
+                        onClick={() => document.getElementById("cv-upload")?.click()}
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        {uploading ? "Uploading..." : "Select files"}
+                      </Button>
+                    </label>
+                    <div className="inline-flex items-center rounded-2xl border border-sky-100 bg-white/88 px-4 py-3 text-sm text-slate-500">
+                      Supports PDF and DOCX. Use cleaner CVs for better parsing quality.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <Card className="sky-card rounded-[1.75rem] border-0">
+              <CardContent className="p-6">
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Inbox posture</p>
+                <p className="mt-2 text-4xl font-semibold text-slate-900">{loading ? 0 : candidates.length}</p>
+                <p className="mt-2 text-sm leading-7 text-slate-500">
+                  Candidate profiles already stored and ready for selection in the screening workspace.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="soft-panel rounded-[1.75rem] border-0">
+              <CardContent className="p-6">
+                <p className="text-sm font-semibold text-slate-900">Upload guidance</p>
+                <div className="mt-4 space-y-3">
+                  {[
+                    "Use one CV file per candidate to keep profiles clean.",
+                    "Prefer PDFs with selectable text for stronger parsing output.",
+                    "Open the parsed preview after upload if the profile looks incomplete.",
+                  ].map((item) => (
+                    <div key={item} className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3 text-sm text-slate-600">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-        <p className="text-slate-600 font-medium mb-1">Drag & drop CV files here, or click to browse</p>
-        <p className="text-sm text-slate-400 mb-4">Supports PDF and DOCX (max 10MB each)</p>
-        <label>
-          <input id="cv-upload" type="file" multiple accept=".pdf,.docx" className="hidden" onChange={(e) => e.target.files && handleUpload(e.target.files)} />
-          <Button disabled={uploading} className="gradient-blue border-0 text-white shadow-lg shadow-indigo-200 cursor-pointer" onClick={() => document.getElementById('cv-upload')?.click()}>
-            {uploading ? "Uploading..." : "Select Files"}
-          </Button>
-        </label>
-      </div>
+      </section>
 
       {loading ? (
-        <div className="text-center py-16 text-slate-400">Loading...</div>
+        <div className="py-16 text-center text-slate-400">Loading candidates...</div>
       ) : candidates.length === 0 ? (
-        <Card className="border-0 shadow-md">
+        <Card className="mt-8 border-0 shadow-md">
           <CardContent className="py-16 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 mx-auto mb-4">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
               <UserCircle className="h-7 w-7 text-slate-300" />
             </div>
-            <p className="text-slate-500">No candidates yet. Upload CVs to get started!</p>
+            <p className="text-slate-500">No candidates yet. Upload CVs to start building the pipeline.</p>
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-0 shadow-md overflow-hidden">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900">All Candidates</h2>
-            <Badge variant="secondary" className="bg-indigo-50 text-indigo-700 border-0">{candidates.length} total</Badge>
+        <div className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold text-slate-900">Candidate list</h2>
+              <p className="text-sm text-slate-500">Tap into each profile to inspect the parsed CV content before screening.</p>
+            </div>
+            <Badge className="rounded-full border-0 bg-sky-50 px-3 py-1.5 text-sky-700">
+              {candidates.length} total
+            </Badge>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
-                <TableHead className="text-xs font-semibold text-slate-500">Candidate</TableHead>
-                <TableHead className="text-xs font-semibold text-slate-500">Email</TableHead>
-                <TableHead className="text-xs font-semibold text-slate-500">Phone</TableHead>
-                <TableHead className="text-xs font-semibold text-slate-500">Uploaded</TableHead>
-                <TableHead className="text-xs font-semibold text-slate-500 text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {candidates.map((c) => (
-                <TableRow key={c.id} className="hover:bg-indigo-50/30">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-cyan-400 text-white text-xs font-bold">
-                        {c.name?.charAt(0)?.toUpperCase() || "?"}
+
+          <div className="grid gap-5 xl:grid-cols-2">
+            {candidates.map((candidate) => (
+              <Card key={candidate.id} className="soft-panel rounded-[1.75rem] border-0">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 text-sm font-bold text-white shadow-lg shadow-sky-200">
+                        {candidate.name?.charAt(0)?.toUpperCase() || "?"}
                       </div>
-                      <span className="font-medium text-slate-900">{c.name}</span>
+                      <div className="min-w-0">
+                        <p className="truncate text-lg font-semibold text-slate-900">
+                          {candidate.name || "Unnamed candidate"}
+                        </p>
+                        <p className="truncate text-sm text-slate-500">{candidate.email || "No email detected"}</p>
+                      </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-slate-500">{c.email || "—"}</TableCell>
-                  <TableCell className="text-slate-500">{c.phone || "—"}</TableCell>
-                  <TableCell className="text-slate-400 text-sm">{new Date(c.uploaded_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedCandidate(c)} className="h-8 w-8 p-0 hover:bg-indigo-100 hover:text-indigo-600">
+
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedCandidate(candidate)}
+                        className="h-9 w-9 rounded-xl p-0 hover:bg-sky-100 hover:text-blue-600"
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(c.id)} className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-500">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(candidate.id)}
+                        className="h-9 w-9 rounded-xl p-0 hover:bg-rose-50 hover:text-rose-600"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+                  </div>
+
+                  <div className="mt-5 grid gap-3 md:grid-cols-3">
+                    <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
+                      <p className="text-xs text-slate-400">Email</p>
+                      <p className="mt-1 truncate text-sm font-medium text-slate-700">{candidate.email || "N/A"}</p>
+                    </div>
+                    <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
+                      <p className="text-xs text-slate-400">Phone</p>
+                      <p className="mt-1 truncate text-sm font-medium text-slate-700">{candidate.phone || "N/A"}</p>
+                    </div>
+                    <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
+                      <p className="text-xs text-slate-400">Uploaded</p>
+                      <p className="mt-1 text-sm font-medium text-slate-700">
+                        {new Date(candidate.uploaded_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Badge className="rounded-full border-0 bg-sky-50 text-sky-700">CV parsed</Badge>
+                    <Badge className="rounded-full border-0 bg-white text-slate-700 ring-1 ring-sky-100">
+                      {candidate.parsed_data?.sections?.length || 0} sections detected
+                    </Badge>
+                  </div>
+
+                  <div className="mt-4 rounded-[1.5rem] border border-sky-100 bg-white/88 p-4">
+                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Preview</p>
+                    <p className="mt-2 line-clamp-4 text-sm leading-7 text-slate-500">
+                      {candidate.parsed_data?.raw_text || "No parsed content available yet."}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       )}
 
       <Dialog open={!!selectedCandidate} onOpenChange={() => setSelectedCandidate(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-cyan-400 text-white text-sm font-bold">
+        <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto rounded-[1.75rem] border border-sky-100 bg-white p-0">
+          <DialogHeader className="border-b border-sky-100 bg-sky-50/60 px-6 py-5">
+            <DialogTitle className="flex items-center gap-3 text-slate-900">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 text-sm font-bold text-white">
                 {selectedCandidate?.name?.charAt(0)?.toUpperCase() || "?"}
               </div>
-              {selectedCandidate?.name || "Candidate Details"}
+              {selectedCandidate?.name || "Candidate details"}
             </DialogTitle>
           </DialogHeader>
-          {selectedCandidate && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
-                  <Mail className="h-4 w-4 text-slate-400" />
-                  <div>
-                    <p className="text-xs text-slate-400">Email</p>
-                    <p className="font-medium text-sm">{selectedCandidate.email || "N/A"}</p>
+
+          {selectedCandidate ? (
+            <div className="space-y-5 p-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-4">
+                  <div className="flex items-center gap-3">
+                    <Mail className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <p className="text-xs text-slate-400">Email</p>
+                      <p className="font-medium text-sm text-slate-700">{selectedCandidate.email || "N/A"}</p>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
-                  <Phone className="h-4 w-4 text-slate-400" />
-                  <div>
-                    <p className="text-xs text-slate-400">Phone</p>
-                    <p className="font-medium text-sm">{selectedCandidate.phone || "N/A"}</p>
+
+                <div className="rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-4">
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <p className="text-xs text-slate-400">Phone</p>
+                      <p className="font-medium text-sm text-slate-700">{selectedCandidate.phone || "N/A"}</p>
+                    </div>
                   </div>
                 </div>
               </div>
+
               <div>
-                <p className="text-sm font-semibold text-slate-700 mb-2">Parsed CV Content</p>
-                <div className="bg-slate-50 rounded-xl p-4 text-sm whitespace-pre-wrap max-h-96 overflow-y-auto text-slate-600 leading-relaxed">
-                  {selectedCandidate.parsed_data?.raw_text || "No parsed content available"}
+                <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  Parsed CV content
+                </p>
+                <div className="mt-3 rounded-[1.5rem] border border-sky-100 bg-slate-50 p-4 text-sm leading-7 whitespace-pre-wrap text-slate-600 max-h-[26rem] overflow-y-auto">
+                  {selectedCandidate.parsed_data?.raw_text || "No parsed content available."}
                 </div>
               </div>
             </div>
-          )}
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>

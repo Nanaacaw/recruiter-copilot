@@ -122,11 +122,13 @@ class InterviewQuestionGenerate(BaseModel):
     screening_id: str
     count: int = 10
     difficulty: str = "medium"
+    language: str = Field(default="en", pattern="^(en|id)$")
 
 
 class InterviewQuestionResponse(BaseModel):
     id: str
     screening_id: str
+    language: str
     question: str
     category: str
     difficulty: str

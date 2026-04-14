@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -17,7 +17,11 @@ def generate_questions(data: InterviewQuestionGenerate, db: Session = Depends(ge
     if not screening:
         raise HTTPException(status_code=404, detail="Screening not found")
 
-    existing = db.query(InterviewQuestion).filter(InterviewQuestion.screening_id == data.screening_id).all()
+    language = data.language.lower().strip()
+    existing = db.query(InterviewQuestion).filter(
+        InterviewQuestion.screening_id == data.screening_id,
+        InterviewQuestion.language == language,
+    ).all()
     if existing:
         return existing
 
@@ -38,6 +42,7 @@ def generate_questions(data: InterviewQuestionGenerate, db: Session = Depends(ge
             },
             count=data.count,
             difficulty=data.difficulty,
+            language=language,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate questions: {str(e)}")
@@ -48,6 +53,7 @@ def generate_questions(data: InterviewQuestionGenerate, db: Session = Depends(ge
             question = InterviewQuestion(
                 id=str(uuid.uuid4()),
                 screening_id=data.screening_id,
+                language=language,
                 question=q.get("question", ""),
                 category=q.get("category", "technical"),
                 difficulty=q.get("difficulty", data.difficulty),
@@ -64,5 +70,12 @@ def generate_questions(data: InterviewQuestionGenerate, db: Session = Depends(ge
 
 
 @router.get("/{screening_id}", response_model=list[InterviewQuestionResponse])
-def get_questions(screening_id: str, db: Session = Depends(get_db)):
-    return db.query(InterviewQuestion).filter(InterviewQuestion.screening_id == screening_id).all()
+def get_questions(
+    screening_id: str,
+    language: str = Query(default="en", pattern="^(en|id)$"),
+    db: Session = Depends(get_db),
+):
+    return db.query(InterviewQuestion).filter(
+        InterviewQuestion.screening_id == screening_id,
+        InterviewQuestion.language == language,
+    ).all()

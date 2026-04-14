@@ -1,18 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,51 +23,100 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { Plus, Trash2, Edit2, Search, X, FileText, Briefcase, GraduationCap, Award } from "lucide-react";
-import type { JobDescription, SkillRequirement } from "@/types";
+import type {
+  CertificationRequirement,
+  CriteriaWeights,
+  EducationRequirement,
+  JobDescription,
+  SkillRequirement,
+} from "@/types";
+import {
+  Award,
+  Briefcase,
+  Edit2,
+  FileText,
+  GraduationCap,
+  Plus,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 
-const emptyJD = {
+type JobDescriptionForm = {
+  title: string;
+  department: string;
+  description: string;
+  required_skills: SkillRequirement[];
+  experience_level: string;
+  min_experience_years: number;
+  education_requirements: EducationRequirement[];
+  certifications: CertificationRequirement[];
+  criteria_weights: CriteriaWeights;
+};
+
+const defaultWeights: CriteriaWeights = {
+  skills: 0.35,
+  experience: 0.25,
+  education: 0.2,
+  certifications: 0.1,
+  overall_fit: 0.1,
+};
+
+const emptyJD: JobDescriptionForm = {
   title: "",
   department: "",
   description: "",
-  required_skills: [] as SkillRequirement[],
+  required_skills: [],
   experience_level: "mid",
   min_experience_years: 0,
-  education_requirements: [] as any[],
-  certifications: [] as any[],
-  criteria_weights: {
-    skills: 0.35,
-    experience: 0.25,
-    education: 0.20,
-    certifications: 0.10,
-    overall_fit: 0.10,
-  },
+  education_requirements: [],
+  certifications: [],
+  criteria_weights: defaultWeights,
 };
+
+const weightFields: Array<{ key: keyof CriteriaWeights; label: string }> = [
+  { key: "skills", label: "Skills" },
+  { key: "experience", label: "Experience" },
+  { key: "education", label: "Education" },
+  { key: "certifications", label: "Certifications" },
+  { key: "overall_fit", label: "Overall fit" },
+];
 
 export default function JobDescriptionsPage() {
   const [jds, setJds] = useState<JobDescription[]>([]);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ ...emptyJD });
+  const [form, setForm] = useState<JobDescriptionForm>({ ...emptyJD });
   const [newSkill, setNewSkill] = useState("");
   const [newEdu, setNewEdu] = useState({ level: "", field: "" });
   const [newCert, setNewCert] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const resetEditor = () => {
+    setForm({ ...emptyJD, criteria_weights: { ...defaultWeights } });
+    setEditingId(null);
+    setNewSkill("");
+    setNewEdu({ level: "", field: "" });
+    setNewCert("");
+  };
+
   const loadJds = async () => {
     try {
       const data = await api.getJobDescriptions(search || undefined);
       setJds(data);
-    } catch {} finally {
+    } catch {
+      setJds([]);
+    } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { loadJds(); }, [search]);
+  useEffect(() => {
+    loadJds();
+  }, [search]);
 
   const handleSave = async () => {
     try {
@@ -74,11 +126,12 @@ export default function JobDescriptionsPage() {
         await api.createJobDescription(form);
       }
       setDialogOpen(false);
-      setForm({ ...emptyJD });
-      setEditingId(null);
+      resetEditor();
       loadJds();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message);
+      }
     }
   };
 
@@ -92,7 +145,7 @@ export default function JobDescriptionsPage() {
       min_experience_years: jd.min_experience_years,
       education_requirements: jd.education_requirements || [],
       certifications: jd.certifications || [],
-      criteria_weights: jd.criteria_weights || emptyJD.criteria_weights,
+      criteria_weights: jd.criteria_weights || { ...defaultWeights },
     });
     setEditingId(jd.id);
     setDialogOpen(true);
@@ -100,200 +153,514 @@ export default function JobDescriptionsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this job description?")) return;
-    try { await api.deleteJobDescription(id); loadJds(); } catch (err: any) { alert(err.message); }
+    try {
+      await api.deleteJobDescription(id);
+      loadJds();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message);
+      }
+    }
   };
 
   const addSkill = () => {
     if (!newSkill.trim()) return;
-    setForm({ ...form, required_skills: [...form.required_skills, { name: newSkill.trim(), weight: 1.0, required: true }] });
+    setForm((current) => ({
+      ...current,
+      required_skills: [
+        ...current.required_skills,
+        { name: newSkill.trim(), weight: 1, required: true },
+      ],
+    }));
     setNewSkill("");
   };
-  const removeSkill = (idx: number) => setForm({ ...form, required_skills: form.required_skills.filter((_, i) => i !== idx) });
+
   const addEducation = () => {
     if (!newEdu.level.trim()) return;
-    setForm({ ...form, education_requirements: [...form.education_requirements, { level: newEdu.level, field: newEdu.field, required: true }] });
+    setForm((current) => ({
+      ...current,
+      education_requirements: [
+        ...current.education_requirements,
+        {
+          level: newEdu.level.trim(),
+          field: newEdu.field.trim(),
+          required: true,
+        },
+      ],
+    }));
     setNewEdu({ level: "", field: "" });
   };
+
   const addCertification = () => {
     if (!newCert.trim()) return;
-    setForm({ ...form, certifications: [...form.certifications, { name: newCert.trim(), required: false }] });
+    setForm((current) => ({
+      ...current,
+      certifications: [
+        ...current.certifications,
+        {
+          name: newCert.trim(),
+          required: false,
+        },
+      ],
+    }));
     setNewCert("");
   };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-blue">
-            <Briefcase className="h-5 w-5 text-white" />
+    <div className="page-shell">
+      <section className="hero-mesh soft-panel overflow-hidden rounded-[2rem] border-0">
+        <div className="grid gap-6 p-6 lg:grid-cols-[1.3fr_0.9fr] lg:p-8">
+          <div className="space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
+              <Briefcase className="h-3.5 w-3.5 text-indigo-600" />
+              Hiring brief workspace
+            </div>
+
+            <div>
+              <h1 className="text-3xl font-semibold text-slate-900 md:text-4xl">
+                Create job descriptions in a format that is actually comfortable to fill in.
+              </h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
+                The editor is now larger and grouped into clear sections, so HR can enter title, scope,
+                requirements, and scoring without feeling squeezed into a tiny modal.
+              </p>
+            </div>
+
+            <div className="relative max-w-xl">
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                placeholder="Search by title, department, or keyword..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="h-12 rounded-2xl border-slate-200 bg-white/90 pl-11 shadow-sm"
+              />
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Job Descriptions</h1>
-            <p className="text-slate-500 text-sm">Define positions and screening criteria</p>
+
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+            <Card className="border-0 bg-white/80 shadow-sm">
+              <CardContent className="p-5">
+                <p className="text-sm text-slate-500">Total JDs</p>
+                <p className="mt-2 text-3xl font-semibold text-slate-900">{loading ? 0 : jds.length}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">Structured roles available for screening.</p>
+              </CardContent>
+            </Card>
+            <Card className="border-0 bg-white/80 shadow-sm">
+              <CardContent className="p-5">
+                <p className="text-sm text-slate-500">Required skills</p>
+                <p className="mt-2 text-3xl font-semibold text-slate-900">
+                  {jds.reduce((count, jd) => count + (jd.required_skills?.length || 0), 0)}
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">Across all job descriptions in the workspace.</p>
+              </CardContent>
+            </Card>
+            <Dialog
+              open={dialogOpen}
+              onOpenChange={(open) => {
+                setDialogOpen(open);
+                if (!open) resetEditor();
+              }}
+            >
+              <DialogTrigger
+                render={
+                  <Button className="h-full min-h-36 rounded-[1.75rem] border-0 gradient-blue p-6 text-left text-white shadow-xl shadow-blue-200" />
+                }
+              >
+                <div className="flex h-full flex-col justify-between">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
+                    <Plus className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-lg font-semibold">Create new JD</p>
+                    <p className="text-sm leading-6 text-white/85">
+                      Open the larger editor to define role scope, skills, education, and scoring weights.
+                    </p>
+                  </div>
+                </div>
+              </DialogTrigger>
+
+              <DialogContent
+                showCloseButton={false}
+                className="max-h-[92vh] max-w-[calc(100%-1.5rem)] overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white p-0 sm:max-w-6xl"
+              >
+                <div className="grid h-full min-h-0 lg:grid-cols-[1.15fr_0.85fr]">
+                  <div className="min-h-0 overflow-y-auto p-6 md:p-8">
+                    <DialogHeader className="gap-3">
+                      <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                        <Briefcase className="h-3.5 w-3.5 text-indigo-600" />
+                        {editingId ? "Edit job description" : "Create job description"}
+                      </div>
+                      <DialogTitle className="text-2xl text-slate-900">
+                        {editingId ? "Update this hiring brief" : "Build a recruiter-ready hiring brief"}
+                      </DialogTitle>
+                      <DialogDescription className="max-w-2xl text-sm leading-6 text-slate-500">
+                        Capture the essentials first, then add the supporting criteria on the right. This layout is
+                        intentionally wide so entering title, department, description, and requirements feels easier.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="mt-8 space-y-8">
+                      <section className="space-y-4">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">Role basics</p>
+                          <p className="text-sm text-slate-500">Start with the job title, department, and core role description.</p>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label>Title *</Label>
+                            <Input
+                              value={form.title}
+                              onChange={(event) => setForm({ ...form, title: event.target.value })}
+                              placeholder="Senior Frontend Developer"
+                              className="h-12 rounded-xl"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Department</Label>
+                            <Input
+                              value={form.department}
+                              onChange={(event) => setForm({ ...form, department: event.target.value })}
+                              placeholder="Engineering"
+                              className="h-12 rounded-xl"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Description</Label>
+                          <Textarea
+                            value={form.description}
+                            onChange={(event) => setForm({ ...form, description: event.target.value })}
+                            placeholder="Outline the role mission, responsibilities, stack, and the outcomes expected from the hire."
+                            rows={10}
+                            className="min-h-[260px] rounded-2xl"
+                          />
+                        </div>
+                      </section>
+
+                      <section className="space-y-4">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">Experience expectations</p>
+                          <p className="text-sm text-slate-500">Set the seniority and minimum years so screening has better guardrails.</p>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label>Experience level</Label>
+                            <Select
+                              value={form.experience_level}
+                              onValueChange={(value) => setForm({ ...form, experience_level: value || "mid" })}
+                            >
+                              <SelectTrigger className="h-12 rounded-xl">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="junior">Junior</SelectItem>
+                                <SelectItem value="mid">Mid</SelectItem>
+                                <SelectItem value="senior">Senior</SelectItem>
+                                <SelectItem value="lead">Lead</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Minimum years</Label>
+                            <Input
+                              type="number"
+                              value={form.min_experience_years}
+                              onChange={(event) =>
+                                setForm({
+                                  ...form,
+                                  min_experience_years: Number.parseInt(event.target.value, 10) || 0,
+                                })
+                              }
+                              className="h-12 rounded-xl"
+                            />
+                          </div>
+                        </div>
+                      </section>
+                    </div>
+                  </div>
+
+                  <div className="min-h-0 overflow-y-auto border-t border-slate-200/80 bg-slate-50/80 p-6 md:p-8 lg:border-l lg:border-t-0">
+                    <div className="space-y-5">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge className="rounded-full border-0 bg-indigo-100 text-indigo-700">
+                          {form.required_skills.length} skill{form.required_skills.length === 1 ? "" : "s"}
+                        </Badge>
+                        <Badge className="rounded-full border-0 bg-emerald-100 text-emerald-700">
+                          {form.education_requirements.length} education item{form.education_requirements.length === 1 ? "" : "s"}
+                        </Badge>
+                        <Badge className="rounded-full border-0 bg-amber-100 text-amber-700">
+                          {form.certifications.length} certification{form.certifications.length === 1 ? "" : "s"}
+                        </Badge>
+                      </div>
+
+                      <Card className="border border-slate-200/80 bg-white shadow-sm">
+                        <CardContent className="space-y-4 p-5">
+                          <div>
+                            <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                              <Briefcase className="h-4 w-4 text-indigo-600" />
+                              Required skills
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">Add the skills HR wants the AI to actively check for.</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Input
+                              value={newSkill}
+                              onChange={(event) => setNewSkill(event.target.value)}
+                              placeholder="React, TypeScript, FastAPI..."
+                              onKeyDown={(event) => event.key === "Enter" && addSkill()}
+                              className="h-11 rounded-xl"
+                            />
+                            <Button onClick={addSkill} className="rounded-xl px-4">
+                              Add
+                            </Button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {form.required_skills.length === 0 ? (
+                              <p className="text-xs text-slate-400">No skills added yet.</p>
+                            ) : (
+                              form.required_skills.map((skill, index) => (
+                                <Badge key={`${skill.name}-${index}`} className="gap-1 rounded-full border-0 bg-indigo-50 px-3 py-1.5 text-indigo-700">
+                                  {skill.name}
+                                  <X
+                                    className="h-3 w-3 cursor-pointer"
+                                    onClick={() =>
+                                      setForm((current) => ({
+                                        ...current,
+                                        required_skills: current.required_skills.filter((_, itemIndex) => itemIndex !== index),
+                                      }))
+                                    }
+                                  />
+                                </Badge>
+                              ))
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border border-slate-200/80 bg-white shadow-sm">
+                        <CardContent className="space-y-4 p-5">
+                          <div>
+                            <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                              <GraduationCap className="h-4 w-4 text-emerald-600" />
+                              Education requirements
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">List degree level and, if needed, the preferred field.</p>
+                          </div>
+                          <div className="grid gap-2 sm:grid-cols-[0.95fr_1.05fr_auto]">
+                            <Input
+                              value={newEdu.level}
+                              onChange={(event) => setNewEdu({ ...newEdu, level: event.target.value })}
+                              placeholder="Bachelor's"
+                              className="h-11 rounded-xl"
+                            />
+                            <Input
+                              value={newEdu.field}
+                              onChange={(event) => setNewEdu({ ...newEdu, field: event.target.value })}
+                              placeholder="Computer Science"
+                              className="h-11 rounded-xl"
+                            />
+                            <Button onClick={addEducation} className="rounded-xl px-4">
+                              Add
+                            </Button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {form.education_requirements.length === 0 ? (
+                              <p className="text-xs text-slate-400">No education requirements added yet.</p>
+                            ) : (
+                              form.education_requirements.map((item, index) => (
+                                <Badge key={`${item.level}-${item.field}-${index}`} variant="outline" className="gap-1 rounded-full border-slate-200 px-3 py-1.5 text-slate-700">
+                                  {item.level}
+                                  {item.field ? ` in ${item.field}` : ""}
+                                  <X
+                                    className="h-3 w-3 cursor-pointer"
+                                    onClick={() =>
+                                      setForm((current) => ({
+                                        ...current,
+                                        education_requirements: current.education_requirements.filter(
+                                          (_, itemIndex) => itemIndex !== index
+                                        ),
+                                      }))
+                                    }
+                                  />
+                                </Badge>
+                              ))
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border border-slate-200/80 bg-white shadow-sm">
+                        <CardContent className="space-y-4 p-5">
+                          <div>
+                            <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                              <Award className="h-4 w-4 text-amber-600" />
+                              Certifications
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">Add optional certificates that strengthen the candidate profile.</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Input
+                              value={newCert}
+                              onChange={(event) => setNewCert(event.target.value)}
+                              placeholder="AWS Solutions Architect"
+                              onKeyDown={(event) => event.key === "Enter" && addCertification()}
+                              className="h-11 rounded-xl"
+                            />
+                            <Button onClick={addCertification} className="rounded-xl px-4">
+                              Add
+                            </Button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {form.certifications.length === 0 ? (
+                              <p className="text-xs text-slate-400">No certifications added yet.</p>
+                            ) : (
+                              form.certifications.map((item, index) => (
+                                <Badge key={`${item.name}-${index}`} className="gap-1 rounded-full border-0 bg-amber-50 px-3 py-1.5 text-amber-700">
+                                  {item.name}
+                                  <X
+                                    className="h-3 w-3 cursor-pointer"
+                                    onClick={() =>
+                                      setForm((current) => ({
+                                        ...current,
+                                        certifications: current.certifications.filter((_, itemIndex) => itemIndex !== index),
+                                      }))
+                                    }
+                                  />
+                                </Badge>
+                              ))
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border border-slate-200/80 bg-white shadow-sm">
+                        <CardContent className="space-y-4 p-5">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">Scoring weights</p>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">Adjust how much each dimension influences the final screening score.</p>
+                          </div>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {weightFields.map((field) => (
+                              <div key={field.key} className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                                <Label className="text-xs text-slate-500">{field.label}</Label>
+                                <Input
+                                  type="number"
+                                  step="0.05"
+                                  value={form.criteria_weights[field.key]}
+                                  onChange={(event) =>
+                                    setForm((current) => ({
+                                      ...current,
+                                      criteria_weights: {
+                                        ...current.criteria_weights,
+                                        [field.key]: Number.parseFloat(event.target.value) || 0,
+                                      },
+                                    }))
+                                  }
+                                  className="h-10 rounded-xl bg-white"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                </div>
+
+                <DialogFooter className="gap-3 border-t border-slate-200 bg-white/95 px-6 py-4 md:px-8">
+                  <DialogClose render={<Button variant="outline" className="rounded-xl border-slate-200 px-5" />}>
+                    Cancel
+                  </DialogClose>
+                  <Button
+                    onClick={handleSave}
+                    disabled={!form.title.trim()}
+                    className="rounded-xl gradient-blue px-5 text-white shadow-lg shadow-blue-200"
+                  >
+                    {editingId ? "Save changes" : "Create job description"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) { setForm({ ...emptyJD }); setEditingId(null); }
-        }}>
-          <DialogTrigger render={<Button className="gap-2 gradient-blue border-0 text-white shadow-lg shadow-indigo-200" />}>
-            <Plus className="h-4 w-4" /> Create JD
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingId ? "Edit Job Description" : "Create Job Description"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Title *</Label>
-                  <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Senior Frontend Developer" />
-                </div>
-                <div>
-                  <Label>Department</Label>
-                  <Input value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder="e.g. Engineering" />
-                </div>
-              </div>
-              <div>
-                <Label>Description</Label>
-                <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Full job description..." rows={4} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Experience Level</Label>
-                  <Select value={form.experience_level} onValueChange={(v) => setForm({ ...form, experience_level: v || "mid" })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="junior">Junior</SelectItem>
-                      <SelectItem value="mid">Mid</SelectItem>
-                      <SelectItem value="senior">Senior</SelectItem>
-                      <SelectItem value="lead">Lead</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Min. Years of Experience</Label>
-                  <Input type="number" value={form.min_experience_years} onChange={(e) => setForm({ ...form, min_experience_years: parseInt(e.target.value) || 0 })} />
-                </div>
-              </div>
-              <Separator />
-              <div>
-                <Label className="text-base font-semibold flex items-center gap-2"><Briefcase className="h-4 w-4 text-indigo-500" /> Required Skills</Label>
-                <div className="flex gap-2 mt-2">
-                  <Input value={newSkill} onChange={(e) => setNewSkill(e.target.value)} placeholder="e.g. React, Python, AWS..." onKeyDown={(e) => e.key === "Enter" && addSkill()} />
-                  <Button onClick={addSkill} size="sm" className="shrink-0">Add</Button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {form.required_skills.map((s, i) => (
-                    <Badge key={i} variant={s.required ? "default" : "secondary"} className="gap-1 py-1.5 px-3">
-                      {s.name}
-                      <X className="h-3 w-3 cursor-pointer hover:text-red-300" onClick={() => removeSkill(i)} />
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Label className="text-base font-semibold flex items-center gap-2"><GraduationCap className="h-4 w-4 text-emerald-500" /> Education Requirements</Label>
-                <div className="flex gap-2 mt-2">
-                  <Input value={newEdu.level} onChange={(e) => setNewEdu({ ...newEdu, level: e.target.value })} placeholder="Level (e.g. Bachelor's)" />
-                  <Input value={newEdu.field} onChange={(e) => setNewEdu({ ...newEdu, field: e.target.value })} placeholder="Field" />
-                  <Button onClick={addEducation} size="sm" className="shrink-0">Add</Button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {form.education_requirements.map((e, i) => (
-                    <Badge key={i} variant="outline" className="gap-1 py-1.5 px-3">
-                      {e.level} {e.field && `in ${e.field}`}
-                      <X className="h-3 w-3 cursor-pointer hover:text-red-300" onClick={() => setForm({ ...form, education_requirements: form.education_requirements.filter((_, j) => j !== i) })} />
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <Label className="text-base font-semibold flex items-center gap-2"><Award className="h-4 w-4 text-amber-500" /> Certifications</Label>
-                <div className="flex gap-2 mt-2">
-                  <Input value={newCert} onChange={(e) => setNewCert(e.target.value)} placeholder="e.g. AWS Solutions Architect" onKeyDown={(e) => e.key === "Enter" && addCertification()} />
-                  <Button onClick={addCertification} size="sm" className="shrink-0">Add</Button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {form.certifications.map((c, i) => (
-                    <Badge key={i} variant="secondary" className="gap-1 py-1.5 px-3">
-                      {c.name}
-                      <X className="h-3 w-3 cursor-pointer hover:text-red-300" onClick={() => setForm({ ...form, certifications: form.certifications.filter((_, j) => j !== i) })} />
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-              <Separator />
-              <div>
-                <Label className="text-base font-semibold">Scoring Weights</Label>
-                <div className="grid grid-cols-5 gap-3 mt-2">
-                  {([["skills", "Skills"], ["experience", "Experience"], ["education", "Education"], ["certifications", "Certs"], ["overall_fit", "Fit"]] as const).map(([key, label]) => (
-                    <div key={key}>
-                      <Label className="text-xs">{label}</Label>
-                      <Input type="number" step="0.05" value={form.criteria_weights[key]} onChange={(e) => setForm({ ...form, criteria_weights: { ...form.criteria_weights, [key]: parseFloat(e.target.value) || 0 } })} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <Button onClick={handleSave} className="w-full gradient-blue border-0 text-white shadow-lg shadow-indigo-200">
-                {editingId ? "Update Job Description" : "Create Job Description"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="relative mb-6 max-w-md">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-        <Input placeholder="Search job descriptions..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-11 h-11 rounded-xl border-slate-200 bg-white shadow-sm" />
-      </div>
+      </section>
 
       {loading ? (
-        <div className="text-center py-16 text-slate-400">Loading...</div>
+        <div className="py-16 text-center text-slate-400">Loading job descriptions...</div>
       ) : jds.length === 0 ? (
-        <Card className="border-0 shadow-md">
+        <Card className="mt-8 border-0 shadow-md">
           <CardContent className="py-16 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 mx-auto mb-4">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
               <FileText className="h-7 w-7 text-slate-300" />
             </div>
-            <p className="text-slate-500">No job descriptions yet. Create one to start screening!</p>
+            <p className="text-slate-500">No job descriptions yet. Create one to start screening candidates.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-5 xl:grid-cols-2">
           {jds.map((jd) => (
-            <Card key={jd.id} className="border-0 shadow-md shadow-slate-100/80 hover:shadow-xl hover:shadow-indigo-100/40 transition-all duration-300 group">
-              <CardContent className="pt-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 text-sm font-bold group-hover:bg-indigo-100 transition-colors">
+            <Card
+              key={jd.id}
+              className="border-0 bg-white/90 shadow-md shadow-slate-100/80 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/70"
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-sm font-bold text-indigo-600">
                       {jd.title.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900">{jd.title}</h3>
-                      <p className="text-xs text-slate-400">{jd.department || "No department"}</p>
+                    <div className="min-w-0">
+                      <h3 className="truncate text-lg font-semibold text-slate-900">{jd.title}</h3>
+                      <p className="truncate text-sm text-slate-500">{jd.department || "No department set"}</p>
                     </div>
                   </div>
-                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(jd)} className="h-8 w-8 p-0">
-                      <Edit2 className="h-3.5 w-3.5" />
+
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => handleEdit(jd)} className="h-9 w-9 rounded-xl p-0">
+                      <Edit2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(jd.id)} className="h-8 w-8 p-0">
-                      <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(jd.id)} className="h-9 w-9 rounded-xl p-0 text-red-500">
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  <Badge className="bg-indigo-50 text-indigo-700 border-0 text-xs">{jd.experience_level}</Badge>
-                  <Badge variant="outline" className="text-xs border-slate-200">{jd.min_experience_years}+ yrs</Badge>
-                  {(jd.required_skills || []).slice(0, 4).map((s, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs bg-slate-50">{s.name}</Badge>
-                  ))}
-                  {(jd.required_skills || []).length > 4 && (
-                    <Badge variant="secondary" className="text-xs bg-slate-50">+{(jd.required_skills || []).length - 4}</Badge>
-                  )}
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                    <p className="text-xs text-slate-500">Experience</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                      {jd.experience_level} · {jd.min_experience_years}+ yrs
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                    <p className="text-xs text-slate-500">Skills</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{jd.required_skills?.length || 0} items</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 px-4 py-3">
+                    <p className="text-xs text-slate-500">Certifications</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{jd.certifications?.length || 0} items</p>
+                  </div>
                 </div>
-                {jd.description && <p className="text-sm text-slate-400 line-clamp-2 leading-relaxed">{jd.description}</p>}
+
+                <p className="mt-4 line-clamp-3 text-sm leading-7 text-slate-600">
+                  {jd.description || "No description entered yet."}
+                </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {(jd.required_skills || []).slice(0, 5).map((skill, index) => (
+                    <Badge key={`${jd.id}-skill-${index}`} className="rounded-full border-0 bg-indigo-50 text-indigo-700">
+                      {skill.name}
+                    </Badge>
+                  ))}
+                  {(jd.required_skills || []).length > 5 ? (
+                    <Badge className="rounded-full border-0 bg-slate-100 text-slate-700">
+                      +{(jd.required_skills || []).length - 5} more
+                    </Badge>
+                  ) : null}
+                </div>
               </CardContent>
             </Card>
           ))}

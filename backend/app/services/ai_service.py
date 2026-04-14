@@ -144,10 +144,17 @@ class AIService:
             })
 
     def generate_interview_questions(
-        self, cv_data: dict, jd_data: dict, screening_data: dict, count: int = 10, difficulty: str = "medium"
+        self,
+        cv_data: dict,
+        jd_data: dict,
+        screening_data: dict,
+        count: int = 10,
+        difficulty: str = "medium",
+        language: str = "en",
     ) -> list[dict]:
         cv_text = cv_data.get("raw_text", "")[:3000] if isinstance(cv_data, dict) else str(cv_data)[:3000]
         jd_title = jd_data.get("title", "Unknown Position") if isinstance(jd_data, dict) else "Unknown Position"
+        normalized_language = str(language).lower().strip() or "en"
 
         try:
             return self._get_provider().generate_interview_questions(
@@ -156,6 +163,7 @@ class AIService:
                 screening_result=screening_data,
                 count=count,
                 difficulty=difficulty,
+                language=normalized_language,
             )
         except Exception:
             return []

@@ -1,24 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -26,24 +11,51 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { Trophy, Download, Eye, BarChart3, CheckCircle2, XCircle, AlertTriangle, Medal } from "lucide-react";
 import type { JobDescription, Screening } from "@/types";
+import {
+  AlertTriangle,
+  BarChart3,
+  CheckCircle2,
+  Download,
+  Eye,
+  Medal,
+  Sparkles,
+  Trophy,
+  XCircle,
+} from "lucide-react";
 
 function ScoreBadge({ score }: { score: number }) {
-  if (score >= 75) return <Badge className="bg-emerald-50 text-emerald-700 border-0">Strong</Badge>;
-  if (score >= 50) return <Badge className="bg-amber-50 text-amber-700 border-0">Moderate</Badge>;
-  return <Badge className="bg-red-50 text-red-700 border-0">Weak</Badge>;
+  if (score >= 75) {
+    return <Badge className="rounded-full border-0 bg-emerald-100 text-emerald-700">Strong</Badge>;
+  }
+  if (score >= 50) {
+    return <Badge className="rounded-full border-0 bg-amber-100 text-amber-700">Moderate</Badge>;
+  }
+  return <Badge className="rounded-full border-0 bg-rose-100 text-rose-700">Weak</Badge>;
 }
 
 function MiniBar({ score }: { score: number }) {
-  const color = score >= 75 ? "from-emerald-400 to-cyan-400" : score >= 50 ? "from-amber-400 to-orange-400" : "from-red-400 to-rose-400";
+  const color =
+    score >= 75
+      ? "from-emerald-400 to-cyan-400"
+      : score >= 50
+        ? "from-amber-400 to-orange-400"
+        : "from-rose-400 to-red-500";
+
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
         <div className={`h-full rounded-full bg-gradient-to-r ${color}`} style={{ width: `${score}%` }} />
       </div>
-      <span className="text-xs font-semibold w-7 text-right">{score.toFixed(0)}</span>
+      <span className="w-8 text-right text-xs font-semibold text-slate-700">{score.toFixed(0)}</span>
     </div>
   );
 }
@@ -53,239 +65,419 @@ export default function RankingPage() {
   const [selectedJd, setSelectedJd] = useState("");
   const [screenings, setScreenings] = useState<Screening[]>([]);
   const [selectedScreening, setSelectedScreening] = useState<Screening | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { api.getJobDescriptions().then(setJds).catch(() => {}).finally(() => setLoading(false)); }, []);
   useEffect(() => {
-    if (selectedJd) { api.getScreeningsForJd(selectedJd).then(setScreenings).catch(() => {}); } else { setScreenings([]); }
+    api
+      .getJobDescriptions()
+      .then(setJds)
+      .catch(() => setJds([]));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedJd) {
+      setScreenings([]);
+      return;
+    }
+
+    api.getScreeningsForJd(selectedJd).then(setScreenings).catch(() => setScreenings([]));
   }, [selectedJd]);
 
-  const getScoreColor = (score: number) => score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-red-600";
+  const sortedScreenings = [...screenings].sort((a, b) => b.overall_score - a.overall_score);
+  const selectedJob = jds.find((jd) => jd.id === selectedJd);
 
-  const getMedalColor = (idx: number) => {
-    if (idx === 0) return "from-amber-300 to-yellow-500";
-    if (idx === 1) return "from-slate-300 to-slate-400";
-    if (idx === 2) return "from-amber-600 to-amber-700";
-    return "";
+  const getScoreColor = (score: number) =>
+    score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-rose-600";
+
+  const getMedalGradient = (index: number) => {
+    if (index === 0) return "from-amber-300 to-yellow-500";
+    if (index === 1) return "from-slate-300 to-slate-500";
+    if (index === 2) return "from-amber-500 to-orange-600";
+    return "from-sky-300 to-blue-500";
   };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-amber">
-            <Medal className="h-5 w-5 text-white" />
+    <div className="page-shell">
+      <section className="relative overflow-hidden rounded-[2.25rem] border border-sky-100/90 bg-white/90 shadow-[0_24px_70px_rgba(96,165,250,0.16)]">
+        <div className="absolute inset-0 hero-mesh" />
+        <div className="absolute inset-0 blueprint-grid opacity-50" />
+        <div className="relative grid gap-6 p-6 xl:grid-cols-[1.12fr_0.88fr] lg:p-8">
+          <div className="space-y-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/90 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
+              <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+              Ranking board
+            </div>
+
+            <div>
+              <h1 className="max-w-4xl text-3xl font-semibold text-slate-900 md:text-4xl">
+                A cleaner ranking view for comparing candidates and spotting who should move forward first.
+              </h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
+                The page is now arranged more like a decision board: pick the role, see the top performers, then review the full shortlist in cards that are easier to scan than a dense grid.
+              </p>
+            </div>
+
+            <div className="max-w-xl space-y-2">
+              <p className="text-sm font-medium text-slate-600">Select job description</p>
+              <Select value={selectedJd} onValueChange={(value) => value && setSelectedJd(value)}>
+                <SelectTrigger className="h-12 rounded-2xl border-sky-100 bg-white/90">
+                  <SelectValue placeholder="Choose a position..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {jds.map((jd) => (
+                    <SelectItem key={jd.id} value={jd.id}>
+                      {jd.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Ranking</h1>
-            <p className="text-slate-500 text-sm">Rank and compare candidates by screening score</p>
+
+          <div className="space-y-4">
+            <Card className="sky-card rounded-[1.75rem] border-0">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Ranking volume</p>
+                    <p className="mt-2 text-4xl font-semibold text-slate-900">{selectedJd ? sortedScreenings.length : 0}</p>
+                  </div>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 shadow-lg shadow-sky-200">
+                    <Medal className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+                <p className="mt-3 text-sm leading-7 text-slate-500">
+                  {selectedJob
+                    ? `Candidates already screened against ${selectedJob.title}.`
+                    : "Pick a job description first to activate the ranking board."}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="soft-panel rounded-[1.75rem] border-0">
+              <CardContent className="p-6">
+                <p className="text-sm font-semibold text-slate-900">Decision posture</p>
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Role</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                      {selectedJob?.title || "No role selected"}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
+                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Best candidate score</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">
+                      {sortedScreenings[0] ? sortedScreenings[0].overall_score.toFixed(0) : "No result yet"}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    disabled={!selectedJd || sortedScreenings.length === 0}
+                    className="h-12 w-full rounded-2xl border-sky-100 bg-white/88"
+                    onClick={() => api.exportExcel(selectedJd)}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Export Excel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-        {selectedJd && screenings.length > 0 && (
-          <Button variant="outline" className="gap-2 rounded-xl" onClick={() => api.exportExcel(selectedJd)}>
-            <Download className="h-4 w-4" /> Export Excel
-          </Button>
-        )}
-      </div>
-
-      <div className="max-w-md mb-8">
-        <p className="text-sm font-medium text-slate-600 mb-1.5">Select Job Description</p>
-        <Select value={selectedJd} onValueChange={(v) => v && setSelectedJd(v)}>
-          <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Choose a position..." /></SelectTrigger>
-          <SelectContent>
-            {jds.map((jd) => (<SelectItem key={jd.id} value={jd.id}>{jd.title}</SelectItem>))}
-          </SelectContent>
-        </Select>
-      </div>
+      </section>
 
       {!selectedJd ? (
-        <Card className="border-0 shadow-md">
+        <Card className="mt-8 border-0 shadow-md">
           <CardContent className="py-16 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 mx-auto mb-4">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
               <BarChart3 className="h-7 w-7 text-slate-300" />
             </div>
-            <p className="text-slate-500">Select a job description to view candidate rankings</p>
+            <p className="text-slate-500">Select a job description to activate the ranking board.</p>
           </CardContent>
         </Card>
-      ) : screenings.length === 0 ? (
-        <Card className="border-0 shadow-md">
+      ) : sortedScreenings.length === 0 ? (
+        <Card className="mt-8 border-0 shadow-md">
           <CardContent className="py-16 text-center">
-            <p className="text-slate-500">No screening results yet. Screen candidates first.</p>
+            <p className="text-slate-500">No screening results yet. Screen candidates first, then return here.</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
-          {screenings.sort((a, b) => b.overall_score - a.overall_score).slice(0, 3).length > 0 && (
-            <div className="grid gap-5 md:grid-cols-3">
-              {screenings.sort((a, b) => b.overall_score - a.overall_score).slice(0, 3).map((s, idx) => (
-                <Card key={s.id} className={`border-0 shadow-md relative overflow-hidden ${idx === 0 ? "ring-2 ring-amber-300/50" : ""}`}>
-                  <div className={`h-1.5 ${idx === 0 ? "bg-gradient-to-r from-amber-300 to-yellow-500" : idx === 1 ? "bg-gradient-to-r from-slate-300 to-slate-400" : "bg-gradient-to-r from-amber-600 to-amber-700"}`} />
-                  <CardContent className="pt-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br ${getMedalColor(idx) || "from-slate-200 to-slate-300"} text-white text-sm font-bold shadow-sm`}>
-                          {idx + 1}
+        <>
+          <div className="mt-8 grid gap-5 lg:grid-cols-3">
+            {sortedScreenings.slice(0, 3).map((screening, index) => (
+              <Card
+                key={screening.id}
+                className={`sky-card rounded-[1.85rem] border-0 ${index === 0 ? "shadow-[0_18px_48px_rgba(250,204,21,0.24)]" : ""}`}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${getMedalGradient(index)} text-sm font-bold text-white shadow-lg`}>
+                      {index + 1}
+                    </div>
+                    <Trophy className={`h-5 w-5 ${index === 0 ? "text-amber-500" : index === 1 ? "text-slate-400" : "text-orange-500"}`} />
+                  </div>
+
+                  <div className="mt-5">
+                    <p className="text-lg font-semibold text-slate-900">{screening.candidate?.name || "Candidate"}</p>
+                    <p className="truncate text-sm text-slate-500">{screening.candidate?.email || "No email detected"}</p>
+                  </div>
+
+                  <div className="mt-5 rounded-[1.5rem] border border-sky-100 bg-white/88 p-4">
+                    <p className={`text-4xl font-semibold ${getScoreColor(screening.overall_score)}`}>
+                      {screening.overall_score.toFixed(0)}
+                    </p>
+                    <div className="mt-2">
+                      <ScoreBadge score={screening.overall_score} />
+                    </div>
+                  </div>
+
+                  <div className="mt-5 space-y-3">
+                    {[
+                      { label: "Skills", score: screening.skills_score },
+                      { label: "Experience", score: screening.experience_score },
+                      { label: "Education", score: screening.education_score },
+                      { label: "Certifications", score: screening.certification_score },
+                    ].map((item) => (
+                      <div key={item.label} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs text-slate-500">
+                          <span>{item.label}</span>
+                          <span>{item.score.toFixed(0)}</span>
                         </div>
-                        <div>
-                          <p className="font-semibold text-slate-900">{s.candidate?.name}</p>
-                          <p className="text-xs text-slate-400">{s.candidate?.email}</p>
-                        </div>
+                        <MiniBar score={item.score} />
                       </div>
-                      <div className="text-right">
-                        <p className={`text-3xl font-bold ${getScoreColor(s.overall_score)}`}>{s.overall_score.toFixed(0)}</p>
-                        <ScoreBadge score={s.overall_score} />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="mt-8">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold text-slate-900">Full shortlist</h2>
+                <p className="text-sm text-slate-500">
+                  Read each candidate card top to bottom: score first, dimension breakdown second, reasons last.
+                </p>
+              </div>
+              <Badge className="rounded-full border-0 bg-sky-50 px-3 py-1.5 text-sky-700">
+                {sortedScreenings.length} candidate{sortedScreenings.length === 1 ? "" : "s"}
+              </Badge>
+            </div>
+
+            <div className="space-y-4">
+              {sortedScreenings.map((screening, index) => (
+                <Card key={screening.id} className="soft-panel rounded-[1.85rem] border-0">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Badge className="rounded-full border-0 bg-slate-900 text-white">Rank #{index + 1}</Badge>
+                          <p className="text-xl font-semibold text-slate-900">
+                            {screening.candidate?.name || "Candidate"}
+                          </p>
+                          <p className="text-sm text-slate-500">{screening.candidate?.email || "No email detected"}</p>
+                        </div>
+
+                        <p className="mt-4 rounded-[1.5rem] border border-sky-100 bg-white/88 px-4 py-4 text-sm leading-7 text-slate-600">
+                          {screening.ai_analysis.summary || "No summary stored for this result."}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.5rem] border border-sky-100 bg-white/90 px-5 py-4 shadow-sm">
+                        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Overall score</p>
+                        <p className={`mt-2 text-4xl font-semibold ${getScoreColor(screening.overall_score)}`}>
+                          {screening.overall_score.toFixed(0)}
+                        </p>
+                        <div className="mt-2">
+                          <ScoreBadge score={screening.overall_score} />
+                        </div>
                       </div>
                     </div>
-                    <div className="space-y-2">
+
+                    <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                       {[
-                        { label: "Skills", score: s.skills_score },
-                        { label: "Experience", score: s.experience_score },
-                        { label: "Education", score: s.education_score },
-                        { label: "Certs", score: s.certification_score },
+                        { label: "Skills", score: screening.skills_score },
+                        { label: "Experience", score: screening.experience_score },
+                        { label: "Education", score: screening.education_score },
+                        { label: "Certifications", score: screening.certification_score },
                       ].map((item) => (
-                        <div key={item.label} className="flex items-center gap-2">
-                          <span className="text-xs w-20 text-slate-400">{item.label}</span>
-                          <MiniBar score={item.score} />
+                        <div key={item.label} className="rounded-[1.4rem] border border-sky-100 bg-white/88 p-4">
+                          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
+                          <p className={`mt-2 text-2xl font-semibold ${getScoreColor(item.score)}`}>
+                            {item.score.toFixed(0)}
+                          </p>
+                          <div className="mt-3">
+                            <MiniBar score={item.score} />
+                          </div>
                         </div>
                       ))}
+                    </div>
+
+                    <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_1fr_auto]">
+                      <div className="rounded-[1.5rem] border border-sky-100 bg-white/88 p-4">
+                        <p className="text-sm font-semibold text-slate-900">Matched skills</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {screening.matched_skills?.length > 0 ? (
+                            screening.matched_skills.slice(0, 5).map((skill, skillIndex) => (
+                              <Badge key={`${screening.id}-matched-${skillIndex}`} className="rounded-full border-0 bg-emerald-50 text-emerald-700">
+                                {skill}
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-sm text-slate-500">No matched skills stored.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="rounded-[1.5rem] border border-sky-100 bg-white/88 p-4">
+                        <p className="text-sm font-semibold text-slate-900">Missing skills</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {screening.missing_skills?.length > 0 ? (
+                            screening.missing_skills.slice(0, 5).map((skill, skillIndex) => (
+                              <Badge key={`${screening.id}-missing-${skillIndex}`} className="rounded-full border-0 bg-slate-100 text-slate-700">
+                                {skill}
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-sm text-slate-500">No missing skills stored.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-row gap-2 xl:flex-col xl:justify-start">
+                        <Button
+                          variant="outline"
+                          className="h-11 rounded-2xl border-sky-100 bg-white/88"
+                          onClick={() => setSelectedScreening(screening)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Details
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="h-11 rounded-2xl border-sky-100 bg-white/88"
+                          onClick={() => api.exportPdf(screening.id)}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Export PDF
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          )}
-
-          <Card className="border-0 shadow-md overflow-hidden">
-            <div className="p-5 border-b border-slate-100">
-              <h2 className="font-semibold text-slate-900">Full Ranking ({screenings.length} candidates)</h2>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50/50 hover:bg-slate-50/50">
-                  <TableHead className="text-xs font-semibold text-slate-500 w-14">Rank</TableHead>
-                  <TableHead className="text-xs font-semibold text-slate-500">Candidate</TableHead>
-                  <TableHead className="text-xs font-semibold text-slate-500">Overall</TableHead>
-                  <TableHead className="text-xs font-semibold text-slate-500">Skills</TableHead>
-                  <TableHead className="text-xs font-semibold text-slate-500">Experience</TableHead>
-                  <TableHead className="text-xs font-semibold text-slate-500">Education</TableHead>
-                  <TableHead className="text-xs font-semibold text-slate-500">Certs</TableHead>
-                  <TableHead className="text-xs font-semibold text-slate-500">Status</TableHead>
-                  <TableHead className="text-xs font-semibold text-slate-500 text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {screenings.sort((a, b) => b.overall_score - a.overall_score).map((s, idx) => (
-                  <TableRow key={s.id} className="hover:bg-indigo-50/30">
-                    <TableCell>
-                      {idx < 3 ? (
-                        <Trophy className={`h-5 w-5 ${idx === 0 ? "text-amber-400" : idx === 1 ? "text-slate-400" : "text-amber-600"}`} />
-                      ) : (
-                        <span className="text-sm text-slate-400 pl-1.5">{idx + 1}</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-cyan-400 text-white text-[10px] font-bold">
-                          {s.candidate?.name?.charAt(0)?.toUpperCase() || "?"}
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{s.candidate?.name}</p>
-                          <p className="text-xs text-slate-400">{s.candidate?.email}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell><span className={`text-lg font-bold ${getScoreColor(s.overall_score)}`}>{s.overall_score.toFixed(0)}</span></TableCell>
-                    <TableCell><span className={`font-semibold text-sm ${getScoreColor(s.skills_score)}`}>{s.skills_score.toFixed(0)}</span></TableCell>
-                    <TableCell><span className={`font-semibold text-sm ${getScoreColor(s.experience_score)}`}>{s.experience_score.toFixed(0)}</span></TableCell>
-                    <TableCell><span className={`font-semibold text-sm ${getScoreColor(s.education_score)}`}>{s.education_score.toFixed(0)}</span></TableCell>
-                    <TableCell><span className={`font-semibold text-sm ${getScoreColor(s.certification_score)}`}>{s.certification_score.toFixed(0)}</span></TableCell>
-                    <TableCell><ScoreBadge score={s.overall_score} /></TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => setSelectedScreening(s)} className="h-8 w-8 p-0 hover:bg-indigo-100">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => api.exportPdf(s.id)} className="h-8 w-8 p-0 hover:bg-indigo-100">
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
-        </div>
+          </div>
+        </>
       )}
 
       <Dialog open={!!selectedScreening} onOpenChange={() => setSelectedScreening(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-cyan-400 text-white text-sm font-bold">
+        <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto rounded-[1.75rem] border border-sky-100 bg-white p-0">
+          <DialogHeader className="border-b border-sky-100 bg-sky-50/60 px-6 py-5">
+            <DialogTitle className="flex items-center gap-3 text-slate-900">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 text-sm font-bold text-white">
                 {selectedScreening?.candidate?.name?.charAt(0)?.toUpperCase() || "?"}
               </div>
-              {selectedScreening?.candidate?.name} — Detailed Analysis
+              {selectedScreening?.candidate?.name || "Candidate analysis"}
             </DialogTitle>
           </DialogHeader>
-          {selectedScreening && (
-            <div className="space-y-5">
-              <div className="grid grid-cols-4 gap-3">
+
+          {selectedScreening ? (
+            <div className="space-y-5 p-6">
+              <div className="grid gap-3 md:grid-cols-4">
                 {[
                   { label: "Overall", score: selectedScreening.overall_score },
                   { label: "Skills", score: selectedScreening.skills_score },
                   { label: "Experience", score: selectedScreening.experience_score },
                   { label: "Education", score: selectedScreening.education_score },
                 ].map((item) => (
-                  <div key={item.label} className="text-center p-3 rounded-xl bg-slate-50">
-                    <p className={`text-2xl font-bold ${getScoreColor(item.score)}`}>{item.score.toFixed(0)}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{item.label}</p>
+                  <div key={item.label} className="rounded-[1.4rem] border border-sky-100 bg-sky-50/70 p-4 text-center">
+                    <p className={`text-2xl font-semibold ${getScoreColor(item.score)}`}>{item.score.toFixed(0)}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
                   </div>
                 ))}
               </div>
+
               <Separator />
-              {selectedScreening.matched_skills?.length > 0 && (
+
+              {selectedScreening.matched_skills?.length > 0 ? (
                 <div>
-                  <p className="font-semibold text-sm text-emerald-600 mb-2 flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Matched Skills</p>
+                  <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-emerald-700">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Matched skills
+                  </p>
                   <div className="flex flex-wrap gap-2">
-                    {selectedScreening.matched_skills.map((s, i) => (<Badge key={i} className="bg-emerald-50 text-emerald-700 border-0">{s}</Badge>))}
+                    {selectedScreening.matched_skills.map((skill, index) => (
+                      <Badge key={`${skill}-${index}`} className="rounded-full border-0 bg-emerald-50 text-emerald-700">
+                        {skill}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
-              )}
-              {selectedScreening.missing_skills?.length > 0 && (
+              ) : null}
+
+              {selectedScreening.missing_skills?.length > 0 ? (
                 <div>
-                  <p className="font-semibold text-sm text-red-600 mb-2 flex items-center gap-1"><XCircle className="h-4 w-4" /> Missing Skills</p>
+                  <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-rose-700">
+                    <XCircle className="h-4 w-4" />
+                    Missing skills
+                  </p>
                   <div className="flex flex-wrap gap-2">
-                    {selectedScreening.missing_skills.map((s, i) => (<Badge key={i} className="bg-red-50 text-red-700 border-0">{s}</Badge>))}
+                    {selectedScreening.missing_skills.map((skill, index) => (
+                      <Badge key={`${skill}-${index}`} className="rounded-full border-0 bg-rose-50 text-rose-700">
+                        {skill}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
-              )}
-              {selectedScreening.strengths?.length > 0 && (
+              ) : null}
+
+              {selectedScreening.strengths?.length > 0 ? (
                 <div>
-                  <p className="font-semibold text-sm mb-2">Strengths</p>
-                  <ul className="space-y-1.5">
-                    {selectedScreening.strengths.map((s, i) => (<li key={i} className="text-sm flex gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />{s}</li>))}
+                  <p className="mb-2 text-sm font-semibold text-slate-900">Strengths</p>
+                  <ul className="space-y-2">
+                    {selectedScreening.strengths.map((item, index) => (
+                      <li key={`${item}-${index}`} className="flex gap-2 text-sm text-slate-600">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                        {item}
+                      </li>
+                    ))}
                   </ul>
                 </div>
-              )}
-              {selectedScreening.weaknesses?.length > 0 && (
+              ) : null}
+
+              {selectedScreening.weaknesses?.length > 0 ? (
                 <div>
-                  <p className="font-semibold text-sm mb-2">Weaknesses</p>
-                  <ul className="space-y-1.5">
-                    {selectedScreening.weaknesses.map((w, i) => (<li key={i} className="text-sm flex gap-2"><XCircle className="h-4 w-4 text-amber-500 mt-0.5 shrink-0" />{w}</li>))}
+                  <p className="mb-2 text-sm font-semibold text-slate-900">Weaknesses</p>
+                  <ul className="space-y-2">
+                    {selectedScreening.weaknesses.map((item, index) => (
+                      <li key={`${item}-${index}`} className="flex gap-2 text-sm text-slate-600">
+                        <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                        {item}
+                      </li>
+                    ))}
                   </ul>
                 </div>
-              )}
-              {selectedScreening.red_flags?.length > 0 && (
+              ) : null}
+
+              {selectedScreening.red_flags?.length > 0 ? (
                 <div>
-                  <p className="font-semibold text-sm text-red-600 mb-2 flex items-center gap-1"><AlertTriangle className="h-4 w-4" /> Red Flags</p>
-                  <ul className="space-y-1.5">
-                    {selectedScreening.red_flags.map((f, i) => (<li key={i} className="text-sm flex gap-2"><AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />{f}</li>))}
+                  <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-rose-700">
+                    <AlertTriangle className="h-4 w-4" />
+                    Red flags
+                  </p>
+                  <ul className="space-y-2">
+                    {selectedScreening.red_flags.map((item, index) => (
+                      <li key={`${item}-${index}`} className="flex gap-2 text-sm text-slate-600">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
+                        {item}
+                      </li>
+                    ))}
                   </ul>
                 </div>
-              )}
+              ) : null}
             </div>
-          )}
+          ) : null}
         </DialogContent>
       </Dialog>
     </div>
