@@ -25,6 +25,11 @@ export default function ExportPage() {
     if (selectedJd) { api.getScreeningsForJd(selectedJd).then(setScreenings).catch(() => {}); } else { setScreenings([]); }
   }, [selectedJd]);
 
+  const selectedJob = jds.find((jd) => jd.id === selectedJd);
+  const selectedJobLabel = selectedJob
+    ? `${selectedJob.title}${selectedJob.department ? ` - ${selectedJob.department}` : ""}`
+    : undefined;
+
   const handleExportPdf = async (screeningId: string, name: string) => {
     setExporting("pdf-" + screeningId);
     try { await api.exportPdf(screeningId); } catch (err: any) { alert(err.message); } finally { setExporting(null); }
@@ -51,7 +56,11 @@ export default function ExportPage() {
       <div className="max-w-md mb-8">
         <p className="text-sm font-medium text-slate-600 mb-1.5">Select Job Description</p>
         <Select value={selectedJd} onValueChange={(v) => v && setSelectedJd(v)}>
-          <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Choose a position..." /></SelectTrigger>
+          <SelectTrigger className="h-11 w-full rounded-xl">
+            <SelectValue placeholder="Choose a position..." className="min-w-0 truncate">
+              {selectedJobLabel}
+            </SelectValue>
+          </SelectTrigger>
           <SelectContent>
             {jds.map((jd) => (<SelectItem key={jd.id} value={jd.id}>{jd.title}</SelectItem>))}
           </SelectContent>

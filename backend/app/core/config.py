@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Any
 
@@ -8,6 +9,12 @@ from pydantic_settings import BaseSettings
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 DEFAULT_DATABASE_PATH = os.path.join(BACKEND_DIR, "screening.db").replace("\\", "/")
 DEFAULT_DATABASE_URL = f"sqlite:///{DEFAULT_DATABASE_PATH}"
+DEFAULT_CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://nanacaw.my.id",
+    "http://nanacaw.my.id",
+]
 
 
 class Settings(BaseSettings):
@@ -42,7 +49,7 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int = 10
     ALLOWED_EXTENSIONS: list[str] = [".pdf", ".docx"]
 
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    CORS_ORIGINS: list[str] = DEFAULT_CORS_ORIGINS.copy()
 
     @field_validator("DEBUG", mode="before")
     @classmethod
@@ -53,6 +60,27 @@ class Settings(BaseSettings):
                 return True
             if normalized in {"0", "false", "no", "off", "release", "prod", "production"}:
                 return False
+        return value
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            normalized = value.strip()
+            if not normalized:
+                return DEFAULT_CORS_ORIGINS.copy()
+
+            if normalized.startswith("["):
+                try:
+                    parsed = json.loads(normalized)
+                except json.JSONDecodeError:
+                    parsed = None
+                else:
+                    if isinstance(parsed, list):
+                        return [str(origin).strip() for origin in parsed if str(origin).strip()]
+
+            return [origin.strip() for origin in normalized.split(",") if origin.strip()]
+
         return value
 
     class Config:

@@ -84,6 +84,9 @@ export default function RankingPage() {
 
   const sortedScreenings = [...screenings].sort((a, b) => b.overall_score - a.overall_score);
   const selectedJob = jds.find((jd) => jd.id === selectedJd);
+  const selectedJobLabel = selectedJob
+    ? `${selectedJob.title}${selectedJob.department ? ` - ${selectedJob.department}` : ""}`
+    : undefined;
 
   const getScoreColor = (score: number) =>
     score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-rose-600";
@@ -119,8 +122,10 @@ export default function RankingPage() {
             <div className="max-w-xl space-y-2">
               <p className="text-sm font-medium text-slate-600">Select job description</p>
               <Select value={selectedJd} onValueChange={(value) => value && setSelectedJd(value)}>
-                <SelectTrigger className="h-12 rounded-2xl border-sky-100 bg-white/90">
-                  <SelectValue placeholder="Choose a position..." />
+                <SelectTrigger className="h-12 w-full rounded-2xl border-sky-100 bg-white/90">
+                  <SelectValue placeholder="Choose a position..." className="min-w-0 truncate">
+                    {selectedJobLabel}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {jds.map((jd) => (

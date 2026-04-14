@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  allowedDevOrigins: ["nanacaw.my.id", "*.nanacaw.my.id", "host.docker.internal"],
+  async rewrites() {
+    return [
+      {
+        source: "/backend-api/:path*",
+        destination: "http://127.0.0.1:8000/api/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -148,6 +148,9 @@ export default function ScreeningPage() {
   const selectedJob = jds.find((jd) => jd.id === selectedJd);
   const selectedCandidateCards = candidates.filter((candidate) => selectedCandidates.includes(candidate.id));
   const sortedResults = [...results].sort((a, b) => b.overall_score - a.overall_score);
+  const selectedJobLabel = selectedJob
+    ? `${selectedJob.title}${selectedJob.department ? ` - ${selectedJob.department}` : ""}`
+    : undefined;
 
   return (
     <div className="page-shell">
@@ -245,8 +248,8 @@ export default function ScreeningPage() {
         </Card>
       ) : null}
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
-        <div className="space-y-6">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,360px)]">
+        <div className="min-w-0 space-y-6">
           <Card className="soft-panel border-0">
             <CardContent className="p-6">
               <div className="flex items-center gap-2">
@@ -261,8 +264,10 @@ export default function ScreeningPage() {
 
               <div className="mt-5 space-y-4">
                 <Select value={selectedJd} onValueChange={(value) => value && setSelectedJd(value)}>
-                  <SelectTrigger className="h-12 rounded-2xl border-slate-200 bg-white/90">
-                    <SelectValue placeholder="Choose a job description..." />
+                  <SelectTrigger className="h-12 w-full rounded-2xl border-slate-200 bg-white/90">
+                    <SelectValue placeholder="Choose a job description..." className="min-w-0 truncate">
+                      {selectedJobLabel}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {jds.map((jd) => (
@@ -275,6 +280,12 @@ export default function ScreeningPage() {
 
                 {selectedJob ? (
                   <div className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-5">
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-semibold text-slate-900">{selectedJob.title}</p>
+                      <p className="truncate text-sm text-slate-500">
+                        {selectedJob.department || "No department set"}
+                      </p>
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       <Badge className="rounded-full border-0 bg-indigo-50 text-indigo-700">
                         {selectedJob.experience_level} level
@@ -373,8 +384,8 @@ export default function ScreeningPage() {
           </Card>
         </div>
 
-        <div className="space-y-6 xl:sticky xl:top-24 xl:self-start">
-          <Card className="soft-panel border-0">
+        <div className="w-full min-w-0 space-y-6 xl:sticky xl:top-24 xl:self-start xl:justify-self-end">
+          <Card className="soft-panel w-full overflow-hidden border-0">
             <CardContent className="p-6">
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
@@ -386,7 +397,7 @@ export default function ScreeningPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+              <div className="mt-5 space-y-3">
                 {[
                   {
                     label: "Job description selected",
@@ -451,7 +462,7 @@ export default function ScreeningPage() {
             </CardContent>
           </Card>
 
-          <Card className="soft-panel border-0">
+          <Card className="soft-panel w-full overflow-hidden border-0">
             <CardContent className="p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>

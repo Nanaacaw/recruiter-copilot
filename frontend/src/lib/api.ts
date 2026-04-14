@@ -7,7 +7,7 @@ import type {
   Screening,
 } from "@/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/backend-api";
 
 class ApiClient {
   private baseUrl: string;
@@ -36,7 +36,7 @@ class ApiClient {
       return res.json();
     } catch (err: any) {
       if (err.name === "TypeError" && err.message === "Failed to fetch") {
-        throw new Error("Cannot connect to backend server. Make sure the backend is running on http://localhost:8000");
+        throw new Error(`Cannot connect to backend server. Check the API endpoint configuration: ${this.baseUrl}`);
       }
       throw err;
     }
@@ -59,7 +59,7 @@ class ApiClient {
       return res.json();
     } catch (err: any) {
       if (err.name === "TypeError" && err.message === "Failed to fetch") {
-        throw new Error("Cannot connect to backend server. Make sure the backend is running on http://localhost:8000");
+        throw new Error(`Cannot connect to backend server. Check the API endpoint configuration: ${this.baseUrl}`);
       }
       throw err;
     }

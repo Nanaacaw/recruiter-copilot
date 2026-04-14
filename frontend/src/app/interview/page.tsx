@@ -150,6 +150,10 @@ export default function InterviewPage() {
   const behavioralQuestions = questions.filter((question) => question.category === "behavioral");
   const situationalQuestions = questions.filter((question) => question.category === "situational");
   const selectedScreeningData = screenings.find((screening) => screening.id === selectedScreening);
+  const selectedScreeningLabel = selectedScreeningData
+    ? `${selectedScreeningData.candidate?.name || "Candidate"} - Score ${selectedScreeningData.overall_score?.toFixed(0)}`
+    : undefined;
+  const questionLanguageLabel = questionLanguage === "id" ? "Bahasa Indonesia" : "English";
 
   return (
     <div className="page-shell">
@@ -203,8 +207,10 @@ export default function InterviewPage() {
         <div className="space-y-2">
           <Label>Select screening result</Label>
           <Select value={selectedScreening} onValueChange={(value) => value && setSelectedScreening(value)}>
-            <SelectTrigger className="h-12 rounded-2xl bg-white/90">
-              <SelectValue placeholder="Choose a screening result..." />
+            <SelectTrigger className="h-12 w-full rounded-2xl bg-white/90">
+              <SelectValue placeholder="Choose a screening result..." className="min-w-0 truncate">
+                {selectedScreeningLabel}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {screenings.map((screening) => (
@@ -219,8 +225,8 @@ export default function InterviewPage() {
         <div className="space-y-2">
           <Label>Question language</Label>
           <Select value={questionLanguage} onValueChange={(value) => setQuestionLanguage(value as InterviewLanguage)}>
-            <SelectTrigger className="h-12 rounded-2xl bg-white/90">
-              <SelectValue />
+            <SelectTrigger className="h-12 w-full rounded-2xl bg-white/90">
+              <SelectValue>{questionLanguageLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="en">English</SelectItem>
