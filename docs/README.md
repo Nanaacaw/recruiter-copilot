@@ -27,7 +27,17 @@ This folder contains the operational and technical documentation for `ai_screeni
 - Canonical database path: `backend/screening.db`
 - Default AI provider: `openai`
 - Default model: `qwen2.5:7b`
-- Gateway mode: OpenAI-compatible endpoint at `https://ollama.nayerim.my.id/v1`
+- Gateway mode: OpenAI-compatible endpoint configured via environment variables
+
+## Public Repo Note
+
+The documentation in this folder intentionally uses placeholders and generic examples for deploy-specific values such as:
+
+- AI gateway hostnames
+- public frontend domains
+- tokens and API keys
+
+Keep real infrastructure values in local `.env` files or deployment configuration rather than committing them into docs.
 
 ## Suggested Reading Order
 

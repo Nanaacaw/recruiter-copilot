@@ -17,7 +17,7 @@ Current default settings:
 
 - provider: `openai`
 - model: `qwen2.5:7b`
-- gateway: `https://ollama.nayerim.my.id/v1`
+- gateway: configured from `OPENAI_BASE_URL`
 
 This uses an OpenAI-compatible chat endpoint rather than the official OpenAI API.
 
@@ -114,7 +114,7 @@ Primary variables:
 ```env
 AI_PROVIDER=openai
 OPENAI_API_KEY=...
-OPENAI_BASE_URL=https://ollama.nayerim.my.id/v1
+OPENAI_BASE_URL=https://your-ollama-gateway.example.com/v1
 OPENAI_MODEL=qwen2.5:7b
 AI_MAX_RETRIES=3
 AI_RETRY_BASE_DELAY_SECONDS=2
@@ -129,10 +129,18 @@ GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.0-flash
 ANTHROPIC_API_KEY=
 CLAUDE_MODEL=claude-3-haiku-20240307
-OLLAMA_BASE_URL=https://ollama.nayerim.my.id
+OLLAMA_BASE_URL=https://your-ollama-gateway.example.com
 OLLAMA_MODEL=qwen2.5:7b
 OLLAMA_API_KEY=
 ```
+
+## Public Documentation Guidance
+
+If this repository is published publicly:
+
+- keep real gateway URLs in `.env` or deployment secrets
+- document examples with placeholder domains such as `your-ollama-gateway.example.com`
+- never commit API keys, bearer tokens, or tunnel tokens into docs
 
 ## Operational Recommendations
 

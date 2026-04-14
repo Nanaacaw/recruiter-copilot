@@ -75,12 +75,22 @@ Based on the current audit, no frontend API secret appears to be hardcoded in so
 
 What is present:
 
-- `frontend/.env.local` contains `NEXT_PUBLIC_API_URL=http://localhost:8000/api`
+- `frontend/.env.local` contains `NEXT_PUBLIC_API_URL=/backend-api`
 
 Why this is acceptable:
 
 - `NEXT_PUBLIC_*` values are intentionally public in Next.js
-- this value is only the backend URL, not a secret token
+- this value is only a same-origin proxy path, not a secret token
+
+## Documentation Safety Note
+
+The docs were updated to avoid committing deploy-specific hostnames or tokens.
+
+Recommended approach:
+
+- keep real gateway URLs in local environment files
+- keep public tunnel or production domains in deployment config
+- use placeholders in documentation examples
 
 ## Files That Must Stay Out Of Git
 
