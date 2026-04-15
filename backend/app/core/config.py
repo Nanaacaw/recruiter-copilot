@@ -12,8 +12,8 @@ DEFAULT_DATABASE_URL = f"sqlite:///{DEFAULT_DATABASE_PATH}"
 DEFAULT_CORS_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://nanacaw.my.id",
-    "http://nanacaw.my.id",
+    "https://app.nanacaw.my.id",
+    "http://app.nanacaw.my.id",
 ]
 
 
