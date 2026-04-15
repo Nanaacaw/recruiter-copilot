@@ -99,11 +99,11 @@ export default function RankingPage() {
   };
 
   return (
-    <div className="page-shell">
+    <div className="page-shell space-y-8">
       <section className="relative overflow-hidden rounded-[2.25rem] border border-sky-100/90 bg-white/90 shadow-[0_24px_70px_rgba(96,165,250,0.16)]">
         <div className="absolute inset-0 hero-mesh" />
         <div className="absolute inset-0 blueprint-grid opacity-50" />
-        <div className="relative grid gap-6 p-6 xl:grid-cols-[1.12fr_0.88fr] lg:p-8">
+        <div className="relative grid gap-6 p-4 sm:p-6 xl:grid-cols-[1.12fr_0.88fr] lg:p-8">
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/90 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
               <Sparkles className="h-3.5 w-3.5 text-blue-600" />
@@ -111,7 +111,7 @@ export default function RankingPage() {
             </div>
 
             <div>
-              <h1 className="max-w-4xl text-3xl font-semibold text-slate-900 md:text-4xl">
+              <h1 className="max-w-4xl text-2xl font-semibold text-slate-900 sm:text-3xl md:text-4xl">
                 A cleaner ranking view for comparing candidates and spotting who should move forward first.
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
@@ -191,7 +191,7 @@ export default function RankingPage() {
       </section>
 
       {!selectedJd ? (
-        <Card className="mt-8 border-0 shadow-md">
+        <Card className="border-0 shadow-md">
           <CardContent className="py-16 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
               <BarChart3 className="h-7 w-7 text-slate-300" />
@@ -200,21 +200,21 @@ export default function RankingPage() {
           </CardContent>
         </Card>
       ) : sortedScreenings.length === 0 ? (
-        <Card className="mt-8 border-0 shadow-md">
+        <Card className="border-0 shadow-md">
           <CardContent className="py-16 text-center">
             <p className="text-slate-500">No screening results yet. Screen candidates first, then return here.</p>
           </CardContent>
         </Card>
       ) : (
         <>
-          <div className="mt-8 grid gap-5 lg:grid-cols-3">
+          <div className="grid gap-5 lg:grid-cols-3">
             {sortedScreenings.slice(0, 3).map((screening, index) => (
               <Card
                 key={screening.id}
                 className={`sky-card rounded-[1.85rem] border-0 ${index === 0 ? "shadow-[0_18px_48px_rgba(250,204,21,0.24)]" : ""}`}
               >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-center justify-between gap-4">
                     <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${getMedalGradient(index)} text-sm font-bold text-white shadow-lg`}>
                       {index + 1}
                     </div>
@@ -256,8 +256,8 @@ export default function RankingPage() {
             ))}
           </div>
 
-          <div className="mt-8">
-            <div className="mb-4 flex items-center justify-between">
+          <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2 className="text-2xl font-semibold text-slate-900">Full shortlist</h2>
                 <p className="text-sm text-slate-500">
@@ -272,7 +272,7 @@ export default function RankingPage() {
             <div className="space-y-4">
               {sortedScreenings.map((screening, index) => (
                 <Card key={screening.id} className="soft-panel rounded-[1.85rem] border-0">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-3">
@@ -288,7 +288,7 @@ export default function RankingPage() {
                         </p>
                       </div>
 
-                      <div className="rounded-[1.5rem] border border-sky-100 bg-white/90 px-5 py-4 shadow-sm">
+                      <div className="w-full rounded-[1.5rem] border border-sky-100 bg-white/90 px-5 py-4 shadow-sm sm:w-auto">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Overall score</p>
                         <p className={`mt-2 text-4xl font-semibold ${getScoreColor(screening.overall_score)}`}>
                           {screening.overall_score.toFixed(0)}
@@ -349,7 +349,7 @@ export default function RankingPage() {
                         </div>
                       </div>
 
-                      <div className="flex flex-row gap-2 xl:flex-col xl:justify-start">
+                      <div className="flex flex-col gap-2 sm:flex-row xl:flex-col xl:justify-start">
                         <Button
                           variant="outline"
                           className="h-11 rounded-2xl border-sky-100 bg-white/88"
@@ -377,8 +377,8 @@ export default function RankingPage() {
       )}
 
       <Dialog open={!!selectedScreening} onOpenChange={() => setSelectedScreening(null)}>
-        <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto rounded-[1.75rem] border border-sky-100 bg-white p-0">
-          <DialogHeader className="border-b border-sky-100 bg-sky-50/60 px-6 py-5">
+        <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto rounded-[1.75rem] border border-sky-100 bg-white p-0 sm:max-h-[88vh] sm:max-w-3xl">
+          <DialogHeader className="border-b border-sky-100 bg-sky-50/60 px-4 py-4 sm:px-6 sm:py-5">
             <DialogTitle className="flex items-center gap-3 text-slate-900">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 text-sm font-bold text-white">
                 {selectedScreening?.candidate?.name?.charAt(0)?.toUpperCase() || "?"}
@@ -388,8 +388,8 @@ export default function RankingPage() {
           </DialogHeader>
 
           {selectedScreening ? (
-            <div className="space-y-5 p-6">
-              <div className="grid gap-3 md:grid-cols-4">
+            <div className="space-y-5 p-4 sm:p-6">
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
                 {[
                   { label: "Overall", score: selectedScreening.overall_score },
                   { label: "Skills", score: selectedScreening.skills_score },

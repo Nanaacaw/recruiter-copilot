@@ -13,10 +13,13 @@ import {
   Download,
   Sparkles,
   ShieldCheck,
+  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import type { HealthStatus } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -42,32 +45,29 @@ const providerColors: Record<string, string> = {
   ollama: "from-blue-400 to-indigo-500",
 };
 
-export function Sidebar() {
-  const pathname = usePathname();
-  const [aiStatus, setAiStatus] = useState<HealthStatus | null>(null);
-
-  useEffect(() => {
-    let ignore = false;
-    api.health()
-      .then((status) => {
-        if (!ignore) setAiStatus(status);
-      })
-      .catch(() => {
-        if (!ignore) setAiStatus(null);
-      });
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
+function SidebarPanel({
+  pathname,
+  aiStatus,
+  onNavigate,
+  mobile = false,
+}: {
+  pathname: string;
+  aiStatus: HealthStatus | null;
+  onNavigate?: () => void;
+  mobile?: boolean;
+}) {
   const provider = (aiStatus?.ai_provider || "openai").toLowerCase();
   const providerLabel = providerLabels[provider] || provider;
   const providerColor = providerColors[provider] || "from-slate-500 to-cyan-400";
   const backendHealthy = aiStatus?.status === "healthy";
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-72 flex-col overflow-hidden border-r border-sky-100/90 bg-[linear-gradient(180deg,rgba(250,252,255,0.98),rgba(237,246,255,0.98))]">
+    <div
+      className={cn(
+        "relative flex h-full flex-col overflow-hidden bg-[linear-gradient(180deg,rgba(250,252,255,0.98),rgba(237,246,255,0.98))]",
+        mobile ? "rounded-[1.75rem]" : "border-r border-sky-100/90"
+      )}
+    >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 blueprint-grid opacity-55" />
         <div className="absolute left-0 top-0 h-64 w-64 rounded-full bg-sky-200/40 blur-3xl" />
@@ -100,7 +100,8 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="relative flex-1 space-y-1 p-4 overflow-y-auto">
+      <nav className="relative flex-1 overflow-y-auto p-4">
+        <div className="space-y-1">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -110,6 +111,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200",
                 isActive
@@ -125,6 +127,7 @@ export function Sidebar() {
             </Link>
           );
         })}
+        </div>
       </nav>
 
       <div className="relative border-t border-sky-100/90 p-4">
@@ -143,6 +146,60 @@ export function Sidebar() {
           </p>
         </div>
       </div>
-    </aside>
+    </div>
+  );
+}
+
+export function Sidebar() {
+  const pathname = usePathname();
+  const [aiStatus, setAiStatus] = useState<HealthStatus | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+    api.health()
+      .then((status) => {
+        if (!ignore) setAiStatus(status);
+      })
+      .catch(() => {
+        if (!ignore) setAiStatus(null);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  return (
+    <>
+      <div className="fixed left-4 top-4 z-40 md:left-6 md:top-5 lg:hidden">
+        <Button
+          variant="outline"
+          size="icon-lg"
+          className="h-11 w-11 rounded-2xl border-sky-100 bg-white/92 text-slate-700 shadow-lg shadow-sky-100/80 backdrop-blur"
+          onClick={() => setMobileOpen(true)}
+        >
+          <Menu className="h-5 w-5" />
+          <span className="sr-only">Open navigation</span>
+        </Button>
+      </div>
+
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-72 lg:flex">
+        <SidebarPanel pathname={pathname} aiStatus={aiStatus} />
+      </aside>
+
+      <Dialog open={mobileOpen} onOpenChange={setMobileOpen}>
+        <DialogContent
+          className="left-4 top-4 h-[calc(100dvh-2rem)] w-[min(20rem,calc(100vw-2rem))] max-w-none -translate-x-0 -translate-y-0 overflow-hidden border border-sky-100 bg-transparent p-0 shadow-2xl shadow-sky-200/70"
+        >
+          <SidebarPanel
+            pathname={pathname}
+            aiStatus={aiStatus}
+            mobile
+            onNavigate={() => setMobileOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -25,6 +25,19 @@ import {
   UserCircle,
 } from "lucide-react";
 
+function formatUploadedDate(value?: string) {
+  if (!value) return "N/A";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "N/A";
+
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const year = date.getUTCFullYear();
+
+  return `${day}/${month}/${year}`;
+}
+
 export default function CandidatesPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,11 +111,11 @@ export default function CandidatesPage() {
   };
 
   return (
-    <div className="page-shell">
+    <div className="page-shell space-y-8">
       <section className="relative overflow-hidden rounded-[2.25rem] border border-sky-100/90 bg-white/90 shadow-[0_24px_70px_rgba(96,165,250,0.16)]">
         <div className="absolute inset-0 hero-mesh" />
         <div className="absolute inset-0 blueprint-grid opacity-50" />
-        <div className="relative grid gap-6 p-6 xl:grid-cols-[1.18fr_0.82fr] lg:p-8">
+        <div className="relative grid gap-6 p-4 sm:p-6 xl:grid-cols-[1.18fr_0.82fr] lg:p-8">
           <div className="space-y-5">
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/90 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
               <Sparkles className="h-3.5 w-3.5 text-blue-600" />
@@ -110,7 +123,7 @@ export default function CandidatesPage() {
             </div>
 
             <div>
-              <h1 className="max-w-4xl text-3xl font-semibold text-slate-900 md:text-4xl">
+              <h1 className="max-w-4xl text-2xl font-semibold text-slate-900 sm:text-3xl md:text-4xl">
                 A lighter inbox for collecting CVs, checking parse quality, and keeping inbound talent organized.
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
@@ -123,7 +136,7 @@ export default function CandidatesPage() {
               onDragLeave={handleDragState(false)}
               onDragOver={handleDragState(true)}
               onDrop={handleDrop}
-              className={`rounded-[1.85rem] border-2 border-dashed p-7 transition-all duration-300 ${
+              className={`rounded-[1.85rem] border-2 border-dashed p-5 sm:p-7 transition-all duration-300 ${
                 dragActive
                   ? "border-sky-400 bg-sky-50/80 shadow-lg shadow-sky-100"
                   : "border-sky-100 bg-white/86"
@@ -158,8 +171,8 @@ export default function CandidatesPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-3">
-                    <label>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    <label className="w-full sm:w-auto">
                       <input
                         id="cv-upload"
                         type="file"
@@ -170,14 +183,14 @@ export default function CandidatesPage() {
                       />
                       <Button
                         disabled={uploading}
-                        className="h-12 rounded-2xl gradient-blue border-0 px-5 text-white shadow-lg shadow-sky-200"
+                        className="h-12 w-full rounded-2xl gradient-blue border-0 px-5 text-white shadow-lg shadow-sky-200 sm:w-auto"
                         onClick={() => document.getElementById("cv-upload")?.click()}
                       >
                         <Upload className="mr-2 h-4 w-4" />
                         {uploading ? "Uploading..." : "Select files"}
                       </Button>
                     </label>
-                    <div className="inline-flex items-center rounded-2xl border border-sky-100 bg-white/88 px-4 py-3 text-sm text-slate-500">
+                    <div className="inline-flex w-full items-center rounded-2xl border border-sky-100 bg-white/88 px-4 py-3 text-sm text-slate-500 sm:w-auto">
                       Supports PDF and DOCX. Use cleaner CVs for better parsing quality.
                     </div>
                   </div>
@@ -220,7 +233,7 @@ export default function CandidatesPage() {
       {loading ? (
         <div className="py-16 text-center text-slate-400">Loading candidates...</div>
       ) : candidates.length === 0 ? (
-        <Card className="mt-8 border-0 shadow-md">
+        <Card className="border-0 shadow-md">
           <CardContent className="py-16 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
               <UserCircle className="h-7 w-7 text-slate-300" />
@@ -229,8 +242,8 @@ export default function CandidatesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="mt-8">
-          <div className="mb-4 flex items-center justify-between">
+        <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-2xl font-semibold text-slate-900">Candidate list</h2>
               <p className="text-sm text-slate-500">Tap into each profile to inspect the parsed CV content before screening.</p>
@@ -240,11 +253,11 @@ export default function CandidatesPage() {
             </Badge>
           </div>
 
-          <div className="grid gap-5 xl:grid-cols-2">
+          <div className="mt-4 grid gap-5 xl:grid-cols-2">
             {candidates.map((candidate) => (
               <Card key={candidate.id} className="soft-panel rounded-[1.75rem] border-0">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between gap-4">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex min-w-0 items-center gap-4">
                       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 text-sm font-bold text-white shadow-lg shadow-sky-200">
                         {candidate.name?.charAt(0)?.toUpperCase() || "?"}
@@ -257,7 +270,7 @@ export default function CandidatesPage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 self-end sm:self-auto">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -277,7 +290,7 @@ export default function CandidatesPage() {
                     </div>
                   </div>
 
-                  <div className="mt-5 grid gap-3 md:grid-cols-3">
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
                       <p className="text-xs text-slate-400">Email</p>
                       <p className="mt-1 truncate text-sm font-medium text-slate-700">{candidate.email || "N/A"}</p>
@@ -289,7 +302,7 @@ export default function CandidatesPage() {
                     <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
                       <p className="text-xs text-slate-400">Uploaded</p>
                       <p className="mt-1 text-sm font-medium text-slate-700">
-                        {new Date(candidate.uploaded_at).toLocaleDateString()}
+                        {formatUploadedDate(candidate.uploaded_at)}
                       </p>
                     </div>
                   </div>
@@ -315,8 +328,8 @@ export default function CandidatesPage() {
       )}
 
       <Dialog open={!!selectedCandidate} onOpenChange={() => setSelectedCandidate(null)}>
-        <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto rounded-[1.75rem] border border-sky-100 bg-white p-0">
-          <DialogHeader className="border-b border-sky-100 bg-sky-50/60 px-6 py-5">
+        <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto rounded-[1.75rem] border border-sky-100 bg-white p-0 sm:max-h-[88vh] sm:max-w-3xl">
+          <DialogHeader className="border-b border-sky-100 bg-sky-50/60 px-4 py-4 sm:px-6 sm:py-5">
             <DialogTitle className="flex items-center gap-3 text-slate-900">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 text-sm font-bold text-white">
                 {selectedCandidate?.name?.charAt(0)?.toUpperCase() || "?"}
@@ -326,7 +339,7 @@ export default function CandidatesPage() {
           </DialogHeader>
 
           {selectedCandidate ? (
-            <div className="space-y-5 p-6">
+            <div className="space-y-5 p-4 sm:p-6">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-4">
                   <div className="flex items-center gap-3">

@@ -367,11 +367,11 @@ export default function JobDescriptionsPage() {
 
         <DialogContent
           showCloseButton={false}
-          className="flex max-h-[92vh] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white p-0 sm:max-w-6xl"
+          className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] flex-col gap-0 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white p-0 sm:h-auto sm:max-h-[min(94dvh,58rem)] sm:max-w-6xl"
         >
-          <div className="min-h-0 flex-1 overflow-y-auto lg:overflow-hidden">
-            <div className="grid min-h-full lg:h-full lg:min-h-0 lg:grid-cols-[1.15fr_0.85fr]">
-              <div className="p-6 md:p-8 lg:min-h-0 lg:overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="grid min-h-full lg:grid-cols-[minmax(0,1.15fr)_minmax(21rem,0.85fr)]">
+              <div className="p-6 md:p-8">
                 <DialogHeader className="gap-3">
                   <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
                     <Briefcase className="h-3.5 w-3.5 text-indigo-600" />
@@ -473,8 +473,8 @@ export default function JobDescriptionsPage() {
                 </div>
               </div>
 
-              <div className="border-t border-slate-200/80 bg-slate-50/80 p-6 md:p-8 lg:min-h-0 lg:overflow-y-auto lg:border-l lg:border-t-0">
-                <div className="space-y-5">
+              <div className="border-t border-slate-200/80 bg-slate-50/80 p-6 md:p-8 lg:border-l lg:border-t-0">
+                <div className="space-y-5 pb-24 md:pb-28 lg:pb-10">
                   <Card className="border border-sky-200/70 bg-white shadow-sm">
                     <CardContent className="space-y-4 p-5">
                       <div className="flex items-start gap-3">
@@ -535,7 +535,7 @@ export default function JobDescriptionsPage() {
                     </CardContent>
                   </Card>
 
-                  <Card className="border border-sky-200/70 bg-white/95 shadow-sm lg:sticky lg:top-6 lg:z-10 supports-[backdrop-filter]:bg-white/85 supports-[backdrop-filter]:backdrop-blur">
+                  <Card className="border border-sky-200/70 bg-white/95 shadow-sm xl:sticky xl:top-6 xl:z-10 supports-[backdrop-filter]:bg-white/85 supports-[backdrop-filter]:backdrop-blur">
                     <CardContent className="space-y-4 p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div>

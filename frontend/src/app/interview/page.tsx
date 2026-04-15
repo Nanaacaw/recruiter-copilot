@@ -156,16 +156,16 @@ export default function InterviewPage() {
   const questionLanguageLabel = questionLanguage === "id" ? "Bahasa Indonesia" : "English";
 
   return (
-    <div className="page-shell">
+    <div className="page-shell space-y-8">
       <section className="hero-mesh soft-panel overflow-hidden rounded-[2rem] border-0">
-        <div className="grid gap-6 p-6 lg:grid-cols-[1.2fr_0.8fr] lg:p-8">
+        <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[1.2fr_0.8fr] lg:p-8">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
               <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
               Interview preparation
             </div>
             <div>
-              <h1 className="text-3xl font-semibold text-slate-900 md:text-4xl">
+              <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl md:text-4xl">
                 Generate interview questions in English or Bahasa Indonesia from real screening gaps.
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
@@ -203,7 +203,7 @@ export default function InterviewPage() {
         </div>
       </section>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[1.25fr_0.55fr_0.55fr]">
+      <div className="grid gap-4 xl:grid-cols-[1.25fr_0.55fr_0.55fr]">
         <div className="space-y-2">
           <Label>Select screening result</Label>
           <Select value={selectedScreening} onValueChange={(value) => value && setSelectedScreening(value)}>
@@ -256,7 +256,7 @@ export default function InterviewPage() {
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
         <Badge className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-slate-700">
           <Languages className="mr-1.5 h-3.5 w-3.5" />
           {questionLanguage === "id" ? "Bahasa Indonesia" : "English"}
@@ -267,8 +267,8 @@ export default function InterviewPage() {
       </div>
 
       {selectedScreeningData ? (
-        <Card className="mt-6 soft-panel border-0">
-          <CardContent className="p-6">
+        <Card className="soft-panel border-0">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-4">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-cyan-400 text-sm font-bold text-white">
@@ -305,7 +305,7 @@ export default function InterviewPage() {
           Loading questions...
         </div>
       ) : questions.length === 0 ? (
-        <Card className="mt-6 border-0 shadow-md">
+        <Card className="border-0 shadow-md">
           <CardContent className="py-16 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
               <MessageSquare className="h-7 w-7 text-slate-300" />
@@ -320,19 +320,19 @@ export default function InterviewPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="mt-6">
+        <div>
           <Tabs defaultValue="all">
-            <TabsList className="rounded-xl bg-slate-100 p-1">
-              <TabsTrigger value="all" className="rounded-lg">
+            <TabsList className="flex w-full justify-start gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1">
+              <TabsTrigger value="all" className="shrink-0 rounded-lg">
                 All ({questions.length})
               </TabsTrigger>
-              <TabsTrigger value="technical" className="rounded-lg">
+              <TabsTrigger value="technical" className="shrink-0 rounded-lg">
                 Technical ({technicalQuestions.length})
               </TabsTrigger>
-              <TabsTrigger value="behavioral" className="rounded-lg">
+              <TabsTrigger value="behavioral" className="shrink-0 rounded-lg">
                 Behavioral ({behavioralQuestions.length})
               </TabsTrigger>
-              <TabsTrigger value="situational" className="rounded-lg">
+              <TabsTrigger value="situational" className="shrink-0 rounded-lg">
                 Situational ({situationalQuestions.length})
               </TabsTrigger>
             </TabsList>
@@ -342,8 +342,8 @@ export default function InterviewPage() {
                 {(tab === "all" ? questions : questions.filter((question) => question.category === tab)).map(
                   (question, index) => (
                     <Card key={question.id} className="border-0 shadow-sm transition-all hover:shadow-md">
-                      <CardContent className="p-5">
-                        <div className="flex gap-4">
+                      <CardContent className="p-4 sm:p-5">
+                        <div className="flex flex-col gap-4 sm:flex-row">
                           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-indigo-600">
                             {index + 1}
                           </div>

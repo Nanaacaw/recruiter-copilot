@@ -153,9 +153,9 @@ export default function ScreeningPage() {
     : undefined;
 
   return (
-    <div className="page-shell">
+    <div className="page-shell space-y-8">
       <section className="hero-mesh soft-panel overflow-hidden rounded-[2rem] border-0">
-        <div className="flex flex-col gap-6 p-6 lg:p-8">
+        <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
@@ -164,7 +164,7 @@ export default function ScreeningPage() {
               </div>
 
               <div>
-                <h1 className="max-w-4xl text-3xl font-semibold text-slate-900 md:text-4xl">
+                <h1 className="max-w-4xl text-2xl font-semibold text-slate-900 sm:text-3xl md:text-4xl">
                   Keep screening simple: pick one role, pick the candidate batch, then review the shortlist.
                 </h1>
                 <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
@@ -219,7 +219,7 @@ export default function ScreeningPage() {
       </section>
 
       {errorMessage ? (
-        <Alert className="mt-6 border border-amber-200 bg-amber-50/90 text-amber-900">
+        <Alert className="border border-amber-200 bg-amber-50/90 text-amber-900">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Screening request failed</AlertTitle>
           <AlertDescription>{errorMessage}</AlertDescription>
@@ -227,8 +227,8 @@ export default function ScreeningPage() {
       ) : null}
 
       {screening ? (
-        <Card className="soft-panel mt-6 border-0">
-          <CardContent className="p-5">
+        <Card className="soft-panel border-0">
+          <CardContent className="p-4 sm:p-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-base font-semibold text-slate-900">AI screening in progress</p>
@@ -248,10 +248,10 @@ export default function ScreeningPage() {
         </Card>
       ) : null}
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,360px)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,360px)]">
         <div className="min-w-0 space-y-6">
           <Card className="soft-panel border-0">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
                   1
@@ -311,7 +311,7 @@ export default function ScreeningPage() {
           </Card>
 
           <Card className="soft-panel border-0">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700">
                   2
@@ -334,7 +334,7 @@ export default function ScreeningPage() {
                     return (
                       <label
                         key={candidate.id}
-                        className={`flex cursor-pointer items-center gap-3 rounded-[1.5rem] border px-4 py-3 transition-all ${
+                        className={`flex cursor-pointer flex-col items-start gap-3 rounded-[1.5rem] border px-4 py-3 transition-all sm:flex-row sm:items-center ${
                           checked
                             ? "border-indigo-200 bg-indigo-50/70 shadow-sm"
                             : "border-slate-200/70 bg-white/75 hover:bg-white"
@@ -355,9 +355,11 @@ export default function ScreeningPage() {
                           </p>
                           <p className="truncate text-xs text-slate-500">{candidate.email || "No email detected"}</p>
                         </div>
-                        {checked ? (
-                          <Badge className="rounded-full border-0 bg-indigo-100 text-indigo-700">Selected</Badge>
-                        ) : null}
+                        <div className="w-full sm:w-auto">
+                          {checked ? (
+                            <Badge className="rounded-full border-0 bg-indigo-100 text-indigo-700">Selected</Badge>
+                          ) : null}
+                        </div>
                       </label>
                     );
                   })
@@ -386,7 +388,7 @@ export default function ScreeningPage() {
 
         <div className="w-full min-w-0 space-y-6 xl:sticky xl:top-24 xl:self-start xl:justify-self-end">
           <Card className="soft-panel w-full overflow-hidden border-0">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
                   3
@@ -412,7 +414,7 @@ export default function ScreeningPage() {
                     done: health?.status === "healthy",
                   },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+                  <div key={item.label} className="flex flex-col gap-2 rounded-2xl bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <span className="text-sm text-slate-600">{item.label}</span>
                     <Badge
                       className={
@@ -463,8 +465,8 @@ export default function ScreeningPage() {
           </Card>
 
           <Card className="soft-panel w-full overflow-hidden border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between gap-3">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h3 className="text-xl font-semibold text-slate-900">Stored results for this role</h3>
                   <p className="mt-1 text-sm text-slate-500">
@@ -490,7 +492,7 @@ export default function ScreeningPage() {
                   {sortedResults.slice(0, 4).map((result, index) => (
                     <div
                       key={result.id}
-                      className="flex items-center justify-between rounded-[1.5rem] border border-slate-200 bg-white/80 px-4 py-3"
+                      className="flex flex-col gap-3 rounded-[1.5rem] border border-slate-200 bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-slate-900">
@@ -510,8 +512,8 @@ export default function ScreeningPage() {
         </div>
       </div>
 
-      <section className="mt-8">
-        <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+      <section>
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="text-2xl font-semibold text-slate-900">Screening results</h2>
             <p className="text-sm text-slate-500">
@@ -538,7 +540,7 @@ export default function ScreeningPage() {
           <div className="space-y-4">
             {sortedResults.map((result, index) => (
               <Card key={result.id} className="soft-panel border-0">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-3">
@@ -554,7 +556,7 @@ export default function ScreeningPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3 rounded-[1.5rem] border border-slate-200 bg-white/85 px-4 py-3">
+                    <div className="flex w-full items-center gap-3 rounded-[1.5rem] border border-slate-200 bg-white/85 px-4 py-3 sm:w-auto">
                       <div>
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Overall score</p>
                         <p className="mt-1 text-sm font-medium text-slate-500">Screening fit</p>

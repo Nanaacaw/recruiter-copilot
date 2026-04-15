@@ -173,7 +173,12 @@
     margin-inline: auto;
     width: 100%;
     max-width: 92rem;
-    padding: 2rem 1.5rem 2.5rem;
+    padding: 1.25rem 1rem 2rem;
+  }
+  @media (min-width: 640px) {
+    .page-shell {
+      padding: 1.5rem 1.25rem 2.25rem;
+    }
   }
   @media (min-width: 1024px) {
     .page-shell {

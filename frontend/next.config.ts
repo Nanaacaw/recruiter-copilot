@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["nanacaw.my.id", "*.nanacaw.my.id", "host.docker.internal"],
+  allowedDevOrigins: ["app.nanacaw.my.id", "nanacaw.my.id", "*.nanacaw.my.id", "host.docker.internal"],
   async rewrites() {
     return [
       {

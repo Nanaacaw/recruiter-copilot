@@ -34,11 +34,11 @@ function MetricCard({
 }) {
   return (
     <Card className="border border-sky-100 bg-white shadow-sm">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-4">
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-medium text-slate-500">{label}</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-900">{value}</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">{value}</p>
             <p className="mt-2 max-w-xs text-sm leading-6 text-slate-500">{helper}</p>
           </div>
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
@@ -130,9 +130,9 @@ export default function DashboardPage() {
             };
 
   return (
-    <div className="page-shell space-y-8">
-      <section className="rounded-[1.75rem] border border-sky-100 bg-white px-6 py-6 shadow-sm lg:px-8">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+    <div className="page-shell space-y-6 sm:space-y-8">
+      <section className="rounded-[1.75rem] border border-sky-100 bg-white px-4 py-5 shadow-sm sm:px-6 sm:py-6 lg:px-8">
+        <div className="flex flex-col gap-5 lg:gap-6 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-4xl space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
               <Radar className="h-3.5 w-3.5" />
@@ -140,7 +140,7 @@ export default function DashboardPage() {
             </div>
 
             <div>
-              <h2 className="text-3xl font-semibold text-slate-900 md:text-4xl">
+              <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl md:text-4xl">
                 A simpler dashboard for tracking pipeline readiness and deciding the next step.
               </h2>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
@@ -161,19 +161,19 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="w-full max-w-md rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-5">
+          <div className="w-full max-w-none rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-4 sm:p-5 xl:max-w-md">
             <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Next move</p>
             <p className="mt-3 text-xl font-semibold text-slate-900">{nextMove.title}</p>
             <p className="mt-2 text-sm leading-7 text-slate-500">{nextMove.body}</p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Link href={nextMove.href}>
-                <Button className="h-11 rounded-2xl gradient-blue border-0 px-5 text-white shadow-md shadow-sky-200">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Link href={nextMove.href} className="w-full sm:w-auto">
+                <Button className="h-11 w-full rounded-2xl gradient-blue border-0 px-5 text-white shadow-md shadow-sky-200 sm:w-auto">
                   {nextMove.cta}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/screening">
-                <Button variant="outline" className="h-11 rounded-2xl border-sky-100 bg-white px-5 text-slate-700">
+              <Link href="/screening" className="w-full sm:w-auto">
+                <Button variant="outline" className="h-11 w-full rounded-2xl border-sky-100 bg-white px-5 text-slate-700 sm:w-auto">
                   Open screening
                 </Button>
               </Link>
@@ -182,7 +182,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <MetricCard
           label="Job Descriptions"
           value={loading ? 0 : jds.length}
@@ -203,9 +203,9 @@ export default function DashboardPage() {
         />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <section className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr] xl:gap-6">
         <Card className="border border-sky-100 bg-white shadow-sm">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-sky-600" />
               <h3 className="text-xl font-semibold text-slate-900">Readiness</h3>
@@ -216,7 +216,7 @@ export default function DashboardPage() {
 
             <div className="mt-5 space-y-3">
               {readinessChecks.map((item) => (
-                <div key={item.label} className="flex items-center justify-between rounded-2xl border border-sky-100 bg-slate-50/70 px-4 py-3">
+                <div key={item.label} className="flex flex-col gap-2 rounded-2xl border border-sky-100 bg-slate-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-sm text-slate-600">{item.label}</span>
                   <Badge
                     className={
@@ -234,7 +234,7 @@ export default function DashboardPage() {
         </Card>
 
         <Card className="border border-sky-100 bg-white shadow-sm">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-2">
               <Layers3 className="h-5 w-5 text-sky-600" />
               <h3 className="text-xl font-semibold text-slate-900">Suggested flow</h3>
@@ -280,9 +280,9 @@ export default function DashboardPage() {
         </Card>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-3">
+      <section className="grid gap-5 xl:grid-cols-3 xl:gap-6">
         <Card className="border border-sky-100 bg-white shadow-sm xl:col-span-1">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-sky-600" />
               <h3 className="text-xl font-semibold text-slate-900">Top results</h3>
@@ -294,7 +294,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 topScreenings.map((screening, index) => (
-                  <div key={screening.id} className="flex items-center justify-between rounded-[1.5rem] border border-sky-100 bg-slate-50/70 px-4 py-3">
+                  <div key={screening.id} className="flex flex-col gap-3 rounded-[1.5rem] border border-sky-100 bg-slate-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-slate-900">
                         #{index + 1} {screening.candidate?.name || "Candidate"}
@@ -314,7 +314,7 @@ export default function DashboardPage() {
         </Card>
 
         <Card className="border border-sky-100 bg-white shadow-sm xl:col-span-1">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-2">
               <FileText className="h-5 w-5 text-sky-600" />
               <h3 className="text-xl font-semibold text-slate-900">Recent roles</h3>
@@ -327,7 +327,7 @@ export default function DashboardPage() {
               ) : (
                 recentJds.map((jd) => (
                   <div key={jd.id} className="rounded-[1.5rem] border border-sky-100 bg-slate-50/70 p-4">
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="font-semibold text-slate-900">{jd.title}</p>
                         <p className="text-sm text-slate-500">{jd.department || "No department"}</p>
@@ -344,7 +344,7 @@ export default function DashboardPage() {
         </Card>
 
         <Card className="border border-sky-100 bg-white shadow-sm xl:col-span-1">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-sky-600" />
               <h3 className="text-xl font-semibold text-slate-900">Recent candidates</h3>
@@ -356,7 +356,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 recentCandidates.map((candidate) => (
-                  <div key={candidate.id} className="flex items-center justify-between rounded-[1.5rem] border border-sky-100 bg-slate-50/70 px-4 py-3">
+                  <div key={candidate.id} className="flex flex-col gap-3 rounded-[1.5rem] border border-sky-100 bg-slate-50/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="min-w-0">
                       <p className="font-semibold text-slate-900">{candidate.name || "Unnamed candidate"}</p>
                       <p className="truncate text-sm text-slate-500">{candidate.email || "No email detected"}</p>
