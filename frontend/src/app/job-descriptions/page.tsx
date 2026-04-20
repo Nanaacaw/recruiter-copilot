@@ -552,13 +552,13 @@ export default function JobDescriptionsPage() {
                     </CardContent>
                   </Card>
 
-                  <Card className="border border-sky-200/70 bg-white/95 shadow-sm xl:sticky xl:top-6 xl:z-10 supports-[backdrop-filter]:bg-white/85 supports-[backdrop-filter]:backdrop-blur">
+                  <Card className="border border-sky-200/70 bg-white shadow-sm">
                     <CardContent className="space-y-4 p-5">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-slate-900">Scoring weights</p>
                           <p className="mt-1 text-xs leading-5 text-slate-500">
-                            Keep this panel nearby while you refine the supporting criteria below.
+                            Adjust the scoring mix, then continue to the criteria sections below.
                           </p>
                         </div>
                         <Badge
