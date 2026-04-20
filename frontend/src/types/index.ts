@@ -53,6 +53,21 @@ export interface HealthStatus {
   ai_model: string;
 }
 
+export interface AuthUser {
+  username: string;
+}
+
+export interface AuthTokenResponse {
+  access_token: string;
+  token_type: "bearer";
+  user: AuthUser;
+}
+
+export interface AuthMeResponse {
+  authenticated: boolean;
+  user?: AuthUser | null;
+}
+
 export interface JobDescription {
   id: string;
   title: string;

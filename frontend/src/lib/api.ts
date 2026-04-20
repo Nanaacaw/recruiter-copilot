@@ -1,4 +1,6 @@
 import type {
+  AuthMeResponse,
+  AuthTokenResponse,
   Candidate,
   HealthStatus,
   JobDescription,
@@ -6,6 +8,7 @@ import type {
 } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/backend-api";
+const AUTH_TOKEN_KEY = "ai_screening_auth_token";
 
 type ApiErrorPayload = {
   detail?: string;
@@ -22,12 +25,33 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
+  getToken(): string {
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem(AUTH_TOKEN_KEY) || "";
+  }
+
+  setToken(token: string): void {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+  }
+
+  clearToken(): void {
+    if (typeof window === "undefined") return;
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  }
+
+  private authHeaders(): HeadersInit {
+    const token = this.getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
     try {
       const res = await fetch(url, {
         headers: {
           "Content-Type": "application/json",
+          ...this.authHeaders(),
           ...options?.headers,
         },
         ...options,
@@ -55,6 +79,7 @@ class ApiClient {
     try {
       const res = await fetch(`${this.baseUrl}${endpoint}`, {
         method: "POST",
+        headers: this.authHeaders(),
         body: formData,
       });
 
@@ -72,7 +97,9 @@ class ApiClient {
   }
 
   async downloadFile(endpoint: string, filename: string): Promise<void> {
-    const res = await fetch(`${this.baseUrl}${endpoint}`);
+    const res = await fetch(`${this.baseUrl}${endpoint}`, {
+      headers: this.authHeaders(),
+    });
     if (!res.ok) throw new Error("Download failed");
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
@@ -82,6 +109,11 @@ class ApiClient {
     a.click();
     window.URL.revokeObjectURL(url);
   }
+
+  // Auth
+  login = (data: { username: string; password: string }) =>
+    this.request<AuthTokenResponse>("/auth/login", { method: "POST", body: JSON.stringify(data) });
+  me = () => this.request<AuthMeResponse>("/auth/me");
 
   // Job Descriptions
   getJobDescriptions = (search?: string) =>

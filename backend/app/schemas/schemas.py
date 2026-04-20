@@ -28,6 +28,26 @@ class CriteriaWeights(BaseModel):
     overall_fit: float = 0.10
 
 
+class AuthLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class AuthUserResponse(BaseModel):
+    username: str
+
+
+class AuthTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: AuthUserResponse
+
+
+class AuthMeResponse(BaseModel):
+    authenticated: bool
+    user: Optional[AuthUserResponse] = None
+
+
 class JobDescriptionCreate(BaseModel):
     title: str
     department: str = ""

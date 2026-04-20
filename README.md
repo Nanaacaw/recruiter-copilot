@@ -94,17 +94,35 @@ Route yang direkomendasikan di Cloudflare:
 - `make status`: cek status docker compose
 - `make health`: cek backend + frontend lokal
 
-## Security and Auth Recommendation
+## Login and Security
 
-Kalau app sudah dibuka ke internet, auth sangat direkomendasikan.
+Project ini punya login internal sederhana berbasis JWT. Saat `AUTH_ENABLED=true`, semua route `/api/*`
+akan butuh token login kecuali endpoint public seperti `/api/auth/*` dan `/api/health`.
 
-Minimum protection yang praktis:
+Konfigurasinya ada di `backend/.env`:
+
+```env
+AUTH_ENABLED=true
+AUTH_USERNAME=admin
+AUTH_PASSWORD=change-this-password
+AUTH_SECRET_KEY=change-this-secret-key
+AUTH_TOKEN_EXPIRE_MINUTES=720
+AUTH_PUBLIC_PATH_PREFIXES=["/api/auth","/api/health"]
+```
+
+Sebelum expose ke internet, ganti minimal:
+
+- `AUTH_PASSWORD`: password login yang kuat
+- `AUTH_SECRET_KEY`: string acak panjang untuk signing token
+
+Frontend akan redirect ke `/login` kalau session belum valid. Token disimpan di browser localStorage
+untuk setup lokal yang simpel.
+
+Minimum protection tambahan yang praktis kalau app sudah dibuka ke internet:
 
 1. Aktifkan Cloudflare Access (Zero Trust) di `app.*` dan `api.*`
 2. Tambahkan Cloudflare WAF/rate-limit rule untuk endpoint sensitif (`/api/candidates/upload`, `/api/screening`)
-3. (Opsional tapi bagus) Tambah auth di backend:
-   - API key untuk internal usage cepat, atau
-   - JWT + login role-based kalau mau multi-user
+3. Tetap gunakan app login ini sebagai pagar kedua di dalam aplikasi
 
 Tanpa lapisan ini, endpoint upload/screening rentan spam traffic dan abuse quota AI.
 
@@ -118,7 +136,7 @@ Project ini sekarang juga sudah punya in-memory rate limiter di backend untuk en
 SECURITY_RATE_LIMIT_ENABLED=true
 SECURITY_RATE_LIMIT_WINDOW_SECONDS=60
 SECURITY_RATE_LIMIT_MAX_REQUESTS=20
-SECURITY_PROTECTED_PATH_PREFIXES=["/api/candidates/upload","/api/screening","/api/export"]
+SECURITY_PROTECTED_PATH_PREFIXES=["/api/auth/login","/api/candidates/upload","/api/screening","/api/export"]
 SECURITY_RATE_LIMIT_METHODS=["POST","PUT","PATCH","DELETE"]
 ```
 

@@ -13,6 +13,7 @@ import {
   Sparkles,
   ShieldCheck,
   Menu,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
@@ -46,11 +47,13 @@ const providerColors: Record<string, string> = {
 function SidebarPanel({
   pathname,
   aiStatus,
+  onLogout,
   onNavigate,
   mobile = false,
 }: {
   pathname: string;
   aiStatus: HealthStatus | null;
+  onLogout: () => void;
   onNavigate?: () => void;
   mobile?: boolean;
 }) {
@@ -142,6 +145,15 @@ function SidebarPanel({
           <p className="mt-2 text-[10px] text-slate-500">
             Current workspace status and provider mapping.
           </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onLogout}
+            className="mt-3 h-9 w-full rounded-xl border-sky-100 bg-white/80 text-slate-600 hover:bg-sky-50"
+          >
+            <LogOut className="mr-2 h-3.5 w-3.5" />
+            Sign out
+          </Button>
         </div>
       </div>
     </div>
@@ -168,6 +180,11 @@ export function Sidebar() {
     };
   }, []);
 
+  const handleLogout = () => {
+    api.clearToken();
+    window.location.href = "/login";
+  };
+
   return (
     <>
       <div className="fixed left-4 top-4 z-40 md:left-6 md:top-5 lg:hidden">
@@ -183,7 +200,7 @@ export function Sidebar() {
       </div>
 
       <aside className="fixed left-0 top-0 z-40 hidden h-screen w-72 lg:flex">
-        <SidebarPanel pathname={pathname} aiStatus={aiStatus} />
+        <SidebarPanel pathname={pathname} aiStatus={aiStatus} onLogout={handleLogout} />
       </aside>
 
       <Dialog open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -194,6 +211,7 @@ export function Sidebar() {
             pathname={pathname}
             aiStatus={aiStatus}
             mobile
+            onLogout={handleLogout}
             onNavigate={() => setMobileOpen(false)}
           />
         </DialogContent>

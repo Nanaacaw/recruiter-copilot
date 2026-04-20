@@ -16,11 +16,16 @@ DEFAULT_CORS_ORIGINS = [
     "http://app.nanacaw.my.id",
 ]
 DEFAULT_SECURITY_PROTECTED_PATH_PREFIXES = [
+    "/api/auth/login",
     "/api/candidates/upload",
     "/api/screening",
     "/api/export",
 ]
 DEFAULT_SECURITY_RATE_LIMIT_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
+DEFAULT_AUTH_PUBLIC_PATH_PREFIXES = [
+    "/api/auth",
+    "/api/health",
+]
 
 
 def _parse_env_list(value: Any, fallback: list[str]) -> Any:
@@ -80,6 +85,13 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: list[str] = DEFAULT_CORS_ORIGINS.copy()
 
+    AUTH_ENABLED: bool = True
+    AUTH_USERNAME: str = "admin"
+    AUTH_PASSWORD: str = "change-this-password"
+    AUTH_SECRET_KEY: str = "change-this-secret-key"
+    AUTH_TOKEN_EXPIRE_MINUTES: int = 720
+    AUTH_PUBLIC_PATH_PREFIXES: list[str] = DEFAULT_AUTH_PUBLIC_PATH_PREFIXES.copy()
+
     SECURITY_RATE_LIMIT_ENABLED: bool = True
     SECURITY_RATE_LIMIT_WINDOW_SECONDS: int = 60
     SECURITY_RATE_LIMIT_MAX_REQUESTS: int = 20
@@ -106,6 +118,11 @@ class Settings(BaseSettings):
     @classmethod
     def parse_security_protected_path_prefixes(cls, value: Any) -> Any:
         return _parse_env_list(value, DEFAULT_SECURITY_PROTECTED_PATH_PREFIXES)
+
+    @field_validator("AUTH_PUBLIC_PATH_PREFIXES", mode="before")
+    @classmethod
+    def parse_auth_public_path_prefixes(cls, value: Any) -> Any:
+        return _parse_env_list(value, DEFAULT_AUTH_PUBLIC_PATH_PREFIXES)
 
     @field_validator("SECURITY_RATE_LIMIT_METHODS", mode="before")
     @classmethod
