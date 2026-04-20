@@ -83,6 +83,12 @@ class CandidateResponse(BaseModel):
         from_attributes = True
 
 
+class CandidateUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+
+
 class ScreeningCreate(BaseModel):
     candidate_ids: list[str]
     job_description_id: str

@@ -5,6 +5,8 @@ import type { DragEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +45,8 @@ export default function CandidatesPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [candidateDraft, setCandidateDraft] = useState({ name: "", email: "", phone: "" });
+  const [savingCandidate, setSavingCandidate] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
   const loadCandidates = async () => {
@@ -92,6 +96,39 @@ export default function CandidatesPage() {
       if (err instanceof Error) {
         alert(err.message);
       }
+    }
+  };
+
+  const openCandidateDetails = (candidate: Candidate) => {
+    setSelectedCandidate(candidate);
+    setCandidateDraft({
+      name: candidate.name || "",
+      email: candidate.email || "",
+      phone: candidate.phone || "",
+    });
+  };
+
+  const handleSaveCandidate = async () => {
+    if (!selectedCandidate) return;
+
+    setSavingCandidate(true);
+    try {
+      const updated = await api.updateCandidate(selectedCandidate.id, candidateDraft);
+      setCandidates((current) =>
+        current.map((candidate) => (candidate.id === updated.id ? updated : candidate))
+      );
+      setSelectedCandidate(updated);
+      setCandidateDraft({
+        name: updated.name || "",
+        email: updated.email || "",
+        phone: updated.phone || "",
+      });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message);
+      }
+    } finally {
+      setSavingCandidate(false);
     }
   };
 
@@ -274,7 +311,7 @@ export default function CandidatesPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setSelectedCandidate(candidate)}
+                        onClick={() => openCandidateDetails(candidate)}
                         className="h-9 w-9 rounded-xl p-0 hover:bg-sky-100 hover:text-blue-600"
                       >
                         <Eye className="h-4 w-4" />
@@ -340,27 +377,71 @@ export default function CandidatesPage() {
 
           {selectedCandidate ? (
             <div className="space-y-5 p-4 sm:p-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-4">
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-4 w-4 text-blue-600" />
-                    <div>
-                      <p className="text-xs text-slate-400">Email</p>
-                      <p className="font-medium text-sm text-slate-700">{selectedCandidate.email || "N/A"}</p>
-                    </div>
+              <div className="rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-4">
+                <div className="flex items-start gap-3">
+                  <UserCircle className="mt-1 h-4 w-4 text-blue-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">Parsed identity</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      Parser output is editable because CV layouts can mix names, locations, links, and contact lines.
+                    </p>
                   </div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-4">
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-blue-600" />
-                    <div>
-                      <p className="text-xs text-slate-400">Phone</p>
-                      <p className="font-medium text-sm text-slate-700">{selectedCandidate.phone || "N/A"}</p>
-                    </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label>Name</Label>
+                    <Input
+                      value={candidateDraft.name}
+                      onChange={(event) => setCandidateDraft((current) => ({ ...current, name: event.target.value }))}
+                      className="h-11 rounded-xl bg-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Mail className="h-3.5 w-3.5 text-blue-600" />
+                      Email
+                    </Label>
+                    <Input
+                      value={candidateDraft.email}
+                      onChange={(event) => setCandidateDraft((current) => ({ ...current, email: event.target.value }))}
+                      className="h-11 rounded-xl bg-white"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5 text-blue-600" />
+                      Phone
+                    </Label>
+                    <Input
+                      value={candidateDraft.phone}
+                      onChange={(event) => setCandidateDraft((current) => ({ ...current, phone: event.target.value }))}
+                      className="h-11 rounded-xl bg-white"
+                    />
                   </div>
                 </div>
+
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    onClick={handleSaveCandidate}
+                    disabled={savingCandidate}
+                    className="h-10 rounded-xl gradient-blue px-4 text-white shadow-md shadow-sky-200"
+                  >
+                    {savingCandidate ? "Saving..." : "Save identity"}
+                  </Button>
+                </div>
               </div>
+
+              {selectedCandidate.parsed_data?.parse_confidence ? (
+                <div className="grid gap-3 md:grid-cols-3">
+                  {Object.entries(selectedCandidate.parsed_data.parse_confidence).map(([field, confidence]) => (
+                    <div key={field} className="rounded-2xl border border-sky-100 bg-white px-4 py-3">
+                      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{field}</p>
+                      <p className="mt-1 text-sm font-semibold capitalize text-slate-700">{String(confidence)}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
 
               <div>
                 <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
