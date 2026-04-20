@@ -98,6 +98,8 @@ class ApiClient {
   getCandidates = () => this.request<Candidate[]>("/candidates");
   getCandidate = (id: string) => this.request<Candidate>(`/candidates/${id}`);
   uploadCVs = (files: File[]) => this.uploadFiles<Candidate[]>("/candidates/upload", files);
+  updateCandidate = (id: string, data: { name?: string; email?: string; phone?: string }) =>
+    this.request<Candidate>(`/candidates/${id}`, { method: "PUT", body: JSON.stringify(data) });
   deleteCandidate = (id: string) =>
     this.request<void>(`/candidates/${id}`, { method: "DELETE" });
 

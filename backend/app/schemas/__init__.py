@@ -9,6 +9,7 @@ __all__ = [
     "JobDescriptionUpdate",
     "JobDescriptionResponse",
     "CandidateResponse",
+    "CandidateUpdate",
     "ScreeningCreate",
     "ScreeningResponse",
     "ScreeningDetailResponse",

@@ -80,6 +80,8 @@ export interface Candidate {
     email?: string;
     phone?: string;
     sections?: string[];
+    parse_confidence?: Record<string, string>;
+    manual_contact_override?: boolean;
   };
   uploaded_at: string;
 }

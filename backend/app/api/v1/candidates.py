@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.config import settings
 from app.models.models import Candidate
-from app.schemas import CandidateResponse
+from app.schemas import CandidateResponse, CandidateUpdate
 from app.services.cv_parser import cv_parser_service
 
 router = APIRouter(prefix="/candidates", tags=["Candidates"])
@@ -66,6 +66,30 @@ def get_candidate(candidate_id: str, db: Session = Depends(get_db)):
     candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate not found")
+    return candidate
+
+
+@router.put("/{candidate_id}", response_model=CandidateResponse)
+def update_candidate(candidate_id: str, data: CandidateUpdate, db: Session = Depends(get_db)):
+    candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
+    if not candidate:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+
+    updates = data.model_dump(exclude_unset=True)
+    for field in ("name", "email", "phone"):
+        if field in updates:
+            setattr(candidate, field, (updates[field] or "").strip())
+
+    parsed_data = dict(candidate.parsed_data or {})
+    for field in ("name", "email", "phone"):
+        if field in updates:
+            parsed_data[field] = getattr(candidate, field)
+    if updates:
+        parsed_data["manual_contact_override"] = True
+    candidate.parsed_data = parsed_data
+
+    db.commit()
+    db.refresh(candidate)
     return candidate
 
 
