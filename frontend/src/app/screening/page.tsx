@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,48 @@ function ScoreCircle({ score }: { score: number }) {
         <span className={`text-base font-bold ${textColor}`}>{score.toFixed(0)}</span>
       </div>
     </div>
+  );
+}
+
+function scoreTone(score: number) {
+  if (score >= 75) return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  if (score >= 50) return "border-amber-200 bg-amber-50 text-amber-700";
+  return "border-rose-200 bg-rose-50 text-rose-700";
+}
+
+function ScoreSummaryPill({ score }: { score: number }) {
+  return (
+    <div
+      className={`flex shrink-0 items-center gap-2 rounded-2xl border px-3 py-2 ${scoreTone(score)}`}
+      aria-label={`Overall score ${score.toFixed(0)}`}
+    >
+      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">Score</span>
+      <span className="text-lg font-bold leading-none">{score.toFixed(0)}</span>
+    </div>
+  );
+}
+
+function InsightTag({
+  children,
+  tone,
+}: {
+  children: ReactNode;
+  tone: "emerald" | "amber" | "rose" | "cyan" | "slate";
+}) {
+  const toneClass = {
+    emerald: "bg-white text-emerald-700",
+    amber: "bg-white text-amber-700",
+    rose: "bg-white text-rose-700",
+    cyan: "bg-cyan-50 text-cyan-700",
+    slate: "bg-slate-100 text-slate-700",
+  }[tone];
+
+  return (
+    <Badge
+      className={`h-auto max-w-full shrink overflow-visible whitespace-normal break-words rounded-2xl border-0 px-2.5 py-1 text-left leading-5 ${toneClass}`}
+    >
+      {children}
+    </Badge>
   );
 }
 
@@ -153,8 +195,8 @@ export default function ScreeningPage() {
     : undefined;
 
   return (
-    <div className="page-shell space-y-8">
-      <section className="hero-mesh soft-panel overflow-hidden rounded-[2rem] border-0">
+    <div className="page-shell space-y-6 sm:space-y-8">
+      <section className="hero-mesh soft-panel overflow-hidden rounded-[1.5rem] border-0 sm:rounded-[2rem]">
         <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div className="space-y-4">
@@ -494,15 +536,15 @@ export default function ScreeningPage() {
                       key={result.id}
                       className="flex flex-col gap-3 rounded-[1.5rem] border border-slate-200 bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-slate-900">
                           #{index + 1} {result.candidate?.name || "Candidate"}
                         </p>
-                        <p className="truncate text-xs text-slate-500">
+                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
                           {result.ai_analysis.summary || "Stored screening result"}
                         </p>
                       </div>
-                      <ScoreCircle score={result.overall_score} />
+                      <ScoreSummaryPill score={result.overall_score} />
                     </div>
                   ))}
                 </div>
@@ -592,7 +634,7 @@ export default function ScreeningPage() {
                   </div>
 
                   <div className="mt-5 grid gap-4 xl:grid-cols-3">
-                    <div className="rounded-[1.5rem] border border-emerald-200 bg-emerald-50/70 p-4">
+                    <div className="min-w-0 overflow-hidden rounded-[1.5rem] border border-emerald-200 bg-emerald-50/70 p-4">
                       <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-700">
                         <CheckCircle2 className="h-4 w-4" />
                         Strengths
@@ -600,17 +642,17 @@ export default function ScreeningPage() {
                       <div className="flex flex-wrap gap-2">
                         {result.strengths.length > 0 ? (
                           result.strengths.slice(0, 4).map((item, itemIndex) => (
-                            <Badge key={`${result.id}-strength-${itemIndex}`} className="rounded-full border-0 bg-white text-emerald-700">
-                              {item}
-                            </Badge>
-                          ))
+                              <InsightTag key={`${result.id}-strength-${itemIndex}`} tone="emerald">
+                                {item}
+                              </InsightTag>
+                            ))
                         ) : (
                           <p className="text-sm text-emerald-800/70">No major strengths recorded.</p>
                         )}
                       </div>
                     </div>
 
-                    <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/70 p-4">
+                    <div className="min-w-0 overflow-hidden rounded-[1.5rem] border border-amber-200 bg-amber-50/70 p-4">
                       <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-700">
                         <XCircle className="h-4 w-4" />
                         Needs follow-up
@@ -618,17 +660,17 @@ export default function ScreeningPage() {
                       <div className="flex flex-wrap gap-2">
                         {result.weaknesses.length > 0 ? (
                           result.weaknesses.slice(0, 4).map((item, itemIndex) => (
-                            <Badge key={`${result.id}-weakness-${itemIndex}`} className="rounded-full border-0 bg-white text-amber-700">
-                              {item}
-                            </Badge>
-                          ))
+                              <InsightTag key={`${result.id}-weakness-${itemIndex}`} tone="amber">
+                                {item}
+                              </InsightTag>
+                            ))
                         ) : (
                           <p className="text-sm text-amber-800/70">No major weaknesses recorded.</p>
                         )}
                       </div>
                     </div>
 
-                    <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50/70 p-4">
+                    <div className="min-w-0 overflow-hidden rounded-[1.5rem] border border-rose-200 bg-rose-50/70 p-4">
                       <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-rose-700">
                         <AlertTriangle className="h-4 w-4" />
                         Red flags
@@ -636,10 +678,10 @@ export default function ScreeningPage() {
                       <div className="flex flex-wrap gap-2">
                         {result.red_flags.length > 0 ? (
                           result.red_flags.slice(0, 4).map((item, itemIndex) => (
-                            <Badge key={`${result.id}-flag-${itemIndex}`} className="rounded-full border-0 bg-white text-rose-700">
-                              {item}
-                            </Badge>
-                          ))
+                              <InsightTag key={`${result.id}-flag-${itemIndex}`} tone="rose">
+                                {item}
+                              </InsightTag>
+                            ))
                         ) : (
                           <p className="text-sm text-rose-800/70">No red flags recorded.</p>
                         )}
@@ -653,9 +695,9 @@ export default function ScreeningPage() {
                       <div className="mt-3 flex flex-wrap gap-2">
                         {result.matched_skills.length > 0 ? (
                           result.matched_skills.slice(0, 6).map((item, itemIndex) => (
-                            <Badge key={`${result.id}-matched-${itemIndex}`} className="rounded-full border-0 bg-cyan-50 text-cyan-700">
+                            <InsightTag key={`${result.id}-matched-${itemIndex}`} tone="cyan">
                               {item}
-                            </Badge>
+                            </InsightTag>
                           ))
                         ) : (
                           <p className="text-sm text-slate-500">No matched skills stored.</p>
@@ -668,9 +710,9 @@ export default function ScreeningPage() {
                       <div className="mt-3 flex flex-wrap gap-2">
                         {result.missing_skills.length > 0 ? (
                           result.missing_skills.slice(0, 6).map((item, itemIndex) => (
-                            <Badge key={`${result.id}-missing-${itemIndex}`} className="rounded-full border-0 bg-slate-100 text-slate-700">
+                            <InsightTag key={`${result.id}-missing-${itemIndex}`} tone="slate">
                               {item}
-                            </Badge>
+                            </InsightTag>
                           ))
                         ) : (
                           <p className="text-sm text-slate-500">No missing skills stored.</p>

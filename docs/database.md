@@ -14,7 +14,6 @@ This is enforced through an absolute default `DATABASE_URL`, which prevents the 
 erDiagram
     JOB_DESCRIPTIONS ||--o{ SCREENINGS : has
     CANDIDATES ||--o{ SCREENINGS : has
-    SCREENINGS ||--o{ INTERVIEW_QUESTIONS : has
 
     JOB_DESCRIPTIONS {
         string id PK
@@ -58,16 +57,6 @@ erDiagram
         json missing_skills
         datetime screening_date
     }
-
-    INTERVIEW_QUESTIONS {
-        string id PK
-        string screening_id FK
-        text question
-        string category
-        string difficulty
-        string focus_area
-        text evaluation_criteria
-    }
 ```
 
 ## Table Notes
@@ -104,15 +93,6 @@ Important notes:
 - `overall_score` is computed server-side from weighted dimensions
 - `ai_analysis` stores the raw normalized AI result plus metadata
 - `_meta.provider` and `_meta.model` inside `ai_analysis` help detect stale results
-
-### `interview_questions`
-
-Stores generated interview questions for one screening result.
-
-Important notes:
-
-- questions are cached after generation
-- if a screening is refreshed, associated interview questions are deleted and can be regenerated
 
 ## Example JSON Structures
 
@@ -206,14 +186,9 @@ Important notes:
 - existing screening row reused or refreshed
 - AI result normalized and stored in `screenings`
 
-### Interview questions
-
-- generated from a screening row
-- cached in `interview_questions`
-
 ### Candidate/JD deletion
 
-- `screenings` and `interview_questions` cascade from parent relationships at the ORM level
+- `screenings` cascade from parent relationships at the ORM level
 
 ## Operational Caution
 

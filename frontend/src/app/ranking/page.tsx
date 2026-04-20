@@ -75,11 +75,23 @@ export default function RankingPage() {
 
   useEffect(() => {
     if (!selectedJd) {
-      setScreenings([]);
       return;
     }
 
-    api.getScreeningsForJd(selectedJd).then(setScreenings).catch(() => setScreenings([]));
+    let ignore = false;
+
+    api
+      .getScreeningsForJd(selectedJd)
+      .then((data) => {
+        if (!ignore) setScreenings(data);
+      })
+      .catch(() => {
+        if (!ignore) setScreenings([]);
+      });
+
+    return () => {
+      ignore = true;
+    };
   }, [selectedJd]);
 
   const sortedScreenings = [...screenings].sort((a, b) => b.overall_score - a.overall_score);
@@ -99,8 +111,8 @@ export default function RankingPage() {
   };
 
   return (
-    <div className="page-shell space-y-8">
-      <section className="relative overflow-hidden rounded-[2.25rem] border border-sky-100/90 bg-white/90 shadow-[0_24px_70px_rgba(96,165,250,0.16)]">
+    <div className="page-shell space-y-6 sm:space-y-8">
+      <section className="relative overflow-hidden rounded-[1.5rem] border border-sky-100/90 bg-white/90 shadow-[0_18px_52px_rgba(96,165,250,0.14)] sm:rounded-[2.25rem]">
         <div className="absolute inset-0 hero-mesh" />
         <div className="absolute inset-0 blueprint-grid opacity-50" />
         <div className="relative grid gap-6 p-4 sm:p-6 xl:grid-cols-[1.12fr_0.88fr] lg:p-8">
@@ -140,7 +152,7 @@ export default function RankingPage() {
 
           <div className="space-y-4">
             <Card className="sky-card rounded-[1.75rem] border-0">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Ranking volume</p>
@@ -159,7 +171,7 @@ export default function RankingPage() {
             </Card>
 
             <Card className="soft-panel rounded-[1.75rem] border-0">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <p className="text-sm font-semibold text-slate-900">Decision posture</p>
                 <div className="mt-4 space-y-3">
                   <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">

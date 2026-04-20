@@ -43,6 +43,7 @@ class AIService:
                 model=settings.OPENAI_MODEL,
                 base_url=settings.OPENAI_BASE_URL,
                 timeout=settings.AI_REQUEST_TIMEOUT_SECONDS,
+                screening_max_tokens=settings.OPENAI_SCREENING_MAX_TOKENS,
                 **retry_options,
             )
         elif provider_type == "claude":
@@ -89,6 +90,13 @@ class AIService:
         enriched["_meta"] = self.provider_metadata()
         return enriched
 
+    def _truncate(self, value: str, max_chars: int) -> str:
+        if max_chars <= 0:
+            return value
+        if len(value) <= max_chars:
+            return value
+        return f"{value[:max_chars]}\n\n[truncated]"
+
     def screen_cv(self, cv_data: dict, jd_data: dict) -> dict:
         cv_text = cv_data.get("raw_text", "") if isinstance(cv_data, dict) else str(cv_data)
 
@@ -130,6 +138,8 @@ class AIService:
             jd_parts.append(f"Certifications: {cert_text}")
 
         jd_text = "\n".join(jd_parts)
+        cv_text = self._truncate(cv_text, settings.AI_SCREENING_MAX_CV_CHARS)
+        jd_text = self._truncate(jd_text, settings.AI_SCREENING_MAX_JD_CHARS)
 
         try:
             result = self._get_provider().screen_cv(cv_text, jd_text)
@@ -142,31 +152,6 @@ class AIService:
                 "red_flags": [], "matched_skills": [], "missing_skills": [],
                 "summary": f"AI screening failed: {str(e)}"
             })
-
-    def generate_interview_questions(
-        self,
-        cv_data: dict,
-        jd_data: dict,
-        screening_data: dict,
-        count: int = 10,
-        difficulty: str = "medium",
-        language: str = "en",
-    ) -> list[dict]:
-        cv_text = cv_data.get("raw_text", "")[:3000] if isinstance(cv_data, dict) else str(cv_data)[:3000]
-        jd_title = jd_data.get("title", "Unknown Position") if isinstance(jd_data, dict) else "Unknown Position"
-        normalized_language = str(language).lower().strip() or "en"
-
-        try:
-            return self._get_provider().generate_interview_questions(
-                cv_text=cv_text,
-                jd_title=jd_title,
-                screening_result=screening_data,
-                count=count,
-                difficulty=difficulty,
-                language=normalized_language,
-            )
-        except Exception:
-            return []
 
     @property
     def provider_name(self) -> str:

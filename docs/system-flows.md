@@ -8,8 +8,7 @@ The product operates as a recruiter pipeline:
 2. upload candidate CVs
 3. run AI screening for selected candidates and one selected JD
 4. rank and compare results
-5. generate interview questions from screening gaps
-6. export reports
+5. export reports
 
 ## Flow 1: Create Job Description
 
@@ -105,31 +104,7 @@ sequenceDiagram
     FE-->>User: Render podium, table, and comparison details
 ```
 
-## Flow 5: Interview Question Generation
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant FE as Frontend
-    participant API as FastAPI /api/interview/generate
-    participant DB as SQLite
-    participant AI as AI provider
-
-    User->>FE: Choose screening result
-    FE->>API: POST /api/interview/generate
-    API->>DB: Load screening row
-    API->>DB: Check existing interview questions
-    alt Questions already exist
-        API-->>FE: Existing questions
-    else No questions yet
-        API->>AI: Generate interview questions
-        AI-->>API: JSON array of questions
-        API->>DB: Insert interview_questions rows
-        API-->>FE: Created questions
-    end
-```
-
-## Flow 6: Export
+## Flow 5: Export
 
 ```mermaid
 sequenceDiagram
@@ -162,11 +137,6 @@ sequenceDiagram
 - retries retryable AI errors including 429-style rate limits
 - spaces requests between candidates using configurable delay
 - normalizes failures into structured zero-score results
-
-### Interview flow
-
-- returns existing question cache when present
-- falls back to an empty list on provider failure
 
 ### Export flow
 

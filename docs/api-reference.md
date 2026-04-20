@@ -142,29 +142,6 @@ Request body:
 
 Returns the requested screening detail rows.
 
-## Interview Questions
-
-### `POST /api/interview/generate`
-
-Request body:
-
-```json
-{
-  "screening_id": "screening-uuid",
-  "count": 10,
-  "difficulty": "medium"
-}
-```
-
-Behavior notes:
-
-- returns cached questions if they already exist
-- generates and stores new questions otherwise
-
-### `GET /api/interview/{screening_id}`
-
-Returns all stored questions for a screening.
-
 ## Export
 
 ### `GET /api/export/pdf/{screening_id}`

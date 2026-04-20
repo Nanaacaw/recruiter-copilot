@@ -1,4 +1,5 @@
 import json
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 import time
@@ -67,18 +68,6 @@ class BaseAIProvider(ABC):
     def screen_cv(self, cv_text: str, jd_text: str) -> dict:
         pass
 
-    @abstractmethod
-    def generate_interview_questions(
-        self,
-        cv_text: str,
-        jd_title: str,
-        screening_result: dict,
-        count: int,
-        difficulty: str,
-        language: str = "en",
-    ) -> list[dict]:
-        pass
-
     def _safe_get(self, d: dict, key: str, default: Any = None) -> Any:
         val = d.get(key, default)
         if val is None:
@@ -108,18 +97,6 @@ class BaseAIProvider(ABC):
             return text[start:end]
         return text if not strict else ""
 
-    def _interview_language_instruction(self, language: str) -> str:
-        if str(language).lower().strip() == "id":
-            return (
-                "Write `question`, `focus_area`, and `evaluation_criteria` in Bahasa Indonesia. "
-                "Keep `category` values exactly as technical, behavioral, or situational."
-            )
-        return (
-            "Write `question`, `focus_area`, and `evaluation_criteria` in English. "
-            "Keep `category` values exactly as technical, behavioral, or situational."
-        )
-
-
 class GeminiProvider(BaseAIProvider):
     name = "gemini"
 
@@ -142,22 +119,6 @@ class GeminiProvider(BaseAIProvider):
             return self._parse_screening_response(response.text)
         except Exception as e:
             return self._error_result(str(e))
-
-    def generate_interview_questions(
-        self,
-        cv_text: str,
-        jd_title: str,
-        screening_result: dict,
-        count: int,
-        difficulty: str,
-        language: str = "en",
-    ) -> list[dict]:
-        prompt = self._build_interview_prompt(cv_text, jd_title, screening_result, count, difficulty, language)
-        try:
-            response = self._run_with_retries(lambda: self.model.generate_content(prompt))
-            return self._parse_questions_response(response.text)
-        except Exception as e:
-            return []
 
     def _build_screening_prompt(self, cv_text: str, jd_text: str) -> str:
         return f"""You are an expert HR screening assistant. Analyze the candidate's CV against the job description and provide a detailed screening result.
@@ -187,42 +148,6 @@ Respond with ONLY valid JSON in this exact format (no markdown, no explanation):
     "summary": "A brief 2-3 sentence overall assessment"
 }}"""
 
-    def _build_interview_prompt(
-        self,
-        cv_text: str,
-        jd_title: str,
-        screening_result: dict,
-        count: int,
-        difficulty: str,
-        language: str,
-    ) -> str:
-        return f"""You are an expert interviewer for the position: {jd_title}
-
-**CANDIDATE PROFILE:**
-{cv_text[:2000]}
-
-**SCREENING RESULTS:**
-- Skills Score: {screening_result.get('skills_score', 0)}
-- Experience Score: {screening_result.get('experience_score', 0)}
-- Education Score: {screening_result.get('education_score', 0)}
-- Weaknesses: {json.dumps(screening_result.get('weaknesses', []))}
-- Missing Skills: {json.dumps(screening_result.get('missing_skills', []))}
-- Red Flags: {json.dumps(screening_result.get('red_flags', []))}
-
-Generate {count} interview questions at {difficulty} difficulty level. Focus on probing areas where the candidate has gaps or weaknesses.
-{self._interview_language_instruction(language)}
-
-Respond with ONLY valid JSON array (no markdown, no explanation):
-[
-    {{
-        "question": "the question text",
-        "category": "technical|behavioral|situational",
-        "difficulty": "{difficulty}",
-        "focus_area": "what skill/gap this targets",
-        "evaluation_criteria": "what to look for in the answer"
-    }}
-]"""
-
     def _parse_screening_response(self, text: str) -> dict:
         cleaned = self._extract_json(text)
         if not cleaned:
@@ -232,18 +157,6 @@ Respond with ONLY valid JSON array (no markdown, no explanation):
             return self._normalize_result(result)
         except json.JSONDecodeError:
             return self._error_result("Invalid JSON from AI")
-
-    def _parse_questions_response(self, text: str) -> list[dict]:
-        cleaned = self._extract_json(text)
-        if not cleaned:
-            return []
-        try:
-            parsed = json.loads(cleaned)
-            if isinstance(parsed, list):
-                return [self._normalize_question(q) for q in parsed if isinstance(q, dict)]
-            return []
-        except json.JSONDecodeError:
-            return []
 
     def _extract_json(self, text: str) -> str:
         text = text.strip()
@@ -271,15 +184,6 @@ Respond with ONLY valid JSON array (no markdown, no explanation):
             "summary": str(self._safe_get(result, "summary", "")),
         }
 
-    def _normalize_question(self, q: dict) -> dict:
-        return {
-            "question": str(self._safe_get(q, "question", "")),
-            "category": str(self._safe_get(q, "category", "technical")),
-            "difficulty": str(self._safe_get(q, "difficulty", "medium")),
-            "focus_area": str(self._safe_get(q, "focus_area", "")),
-            "evaluation_criteria": str(self._safe_get(q, "evaluation_criteria", "")),
-        }
-
     def _error_result(self, error: str) -> dict:
         return {
             "skills_score": 0, "experience_score": 0, "education_score": 0,
@@ -299,6 +203,7 @@ class OpenAIProvider(BaseAIProvider):
         model: str = "gpt-4o-mini",
         base_url: str = "",
         timeout: float = 180.0,
+        screening_max_tokens: int = 900,
         max_retries: int = 0,
         retry_base_delay: float = 2.0,
     ):
@@ -306,6 +211,7 @@ class OpenAIProvider(BaseAIProvider):
         self.base_url = (base_url or "https://api.openai.com/v1").rstrip("/")
         self.model = model
         self.timeout = timeout
+        self.screening_max_tokens = None if int(screening_max_tokens) <= 0 else max(200, int(screening_max_tokens))
         self._configure_retries(max_retries, retry_base_delay)
 
     def _get_headers(self) -> dict:
@@ -314,46 +220,88 @@ class OpenAIProvider(BaseAIProvider):
             "Content-Type": "application/json",
         }
 
+    def _coerce_content_to_text(self, value: Any) -> str:
+        if isinstance(value, str):
+            return value.strip()
+
+        if isinstance(value, list):
+            parts: list[str] = []
+            for item in value:
+                if isinstance(item, str):
+                    text = item.strip()
+                    if text:
+                        parts.append(text)
+                    continue
+
+                if not isinstance(item, dict):
+                    continue
+
+                if isinstance(item.get("text"), str):
+                    text = item["text"].strip()
+                    if text:
+                        parts.append(text)
+                    continue
+
+                nested_text = item.get("text")
+                if isinstance(nested_text, dict) and isinstance(nested_text.get("value"), str):
+                    text = nested_text["value"].strip()
+                    if text:
+                        parts.append(text)
+
+            return "\n".join(parts).strip()
+
+        return ""
+
     def _chat_completion(self, prompt: str, temperature: float, max_tokens: int) -> str:
         import httpx
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": temperature,
+        }
+        if max_tokens is not None:
+            payload["max_tokens"] = max_tokens
         response = httpx.post(
             f"{self.base_url}/chat/completions",
             headers=self._get_headers(),
-            json={
-                "model": self.model,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": temperature,
-                "max_tokens": max_tokens,
-            },
+            json=payload,
             timeout=self.timeout,
         )
         response.raise_for_status()
         data = response.json()
-        return data["choices"][0]["message"].get("content") or ""
+        choices = data.get("choices") or []
+        if not choices:
+            raise ValueError("No choices returned by provider")
+
+        first = choices[0] or {}
+        message = first.get("message") or {}
+
+        content = self._coerce_content_to_text(message.get("content"))
+        if not content:
+            content = self._coerce_content_to_text(message.get("reasoning_content"))
+        if not content:
+            content = self._coerce_content_to_text((first.get("delta") or {}).get("content"))
+        if not content and isinstance(first.get("text"), str):
+            content = first["text"].strip()
+
+        if not content:
+            raise ValueError("Empty model response content")
+
+        return content
 
     def screen_cv(self, cv_text: str, jd_text: str) -> dict:
         prompt = self._build_screening_prompt(cv_text, jd_text)
         try:
-            text = self._run_with_retries(lambda: self._chat_completion(prompt, temperature=0.1, max_tokens=2000))
+            text = self._run_with_retries(
+                lambda: self._chat_completion(
+                    prompt,
+                    temperature=0.1,
+                    max_tokens=self.screening_max_tokens,
+                )
+            )
             return self._parse_response(text)
         except Exception as e:
             return self._error_result(str(e))
-
-    def generate_interview_questions(
-        self,
-        cv_text: str,
-        jd_title: str,
-        screening_result: dict,
-        count: int,
-        difficulty: str,
-        language: str = "en",
-    ) -> list[dict]:
-        prompt = self._build_interview_prompt(cv_text, jd_title, screening_result, count, difficulty, language)
-        try:
-            text = self._run_with_retries(lambda: self._chat_completion(prompt, temperature=0.5, max_tokens=3000))
-            return self._parse_questions(text)
-        except Exception:
-            return []
 
     def _build_screening_prompt(self, cv_text: str, jd_text: str) -> str:
         return f"""You are an expert HR screening assistant. Analyze the candidate's CV against the job description and provide a detailed screening result.
@@ -380,34 +328,6 @@ Respond with ONLY valid JSON (no markdown, no explanation):
     "summary": "A brief 2-3 sentence overall assessment"
 }}"""
 
-    def _build_interview_prompt(
-        self,
-        cv_text: str,
-        jd_title: str,
-        screening_result: dict,
-        count: int,
-        difficulty: str,
-        language: str,
-    ) -> str:
-        return f"""Generate {count} interview questions at {difficulty} difficulty for position: {jd_title}
-
-Candidate profile: {cv_text[:2000]}
-Screening: skills={screening_result.get('skills_score', 0)}, exp={screening_result.get('experience_score', 0)}
-Weaknesses: {screening_result.get('weaknesses', [])}
-Missing: {screening_result.get('missing_skills', [])}
-Language instruction: {self._interview_language_instruction(language)}
-
-Respond with ONLY valid JSON array:
-[
-    {{
-        "question": "...",
-        "category": "technical|behavioral|situational",
-        "difficulty": "{difficulty}",
-        "focus_area": "...",
-        "evaluation_criteria": "..."
-    }}
-]"""
-
     def _parse_response(self, text: str) -> dict:
         cleaned = self._extract_json(text)
         if not cleaned:
@@ -418,19 +338,8 @@ Respond with ONLY valid JSON array:
         except json.JSONDecodeError:
             return self._error_result("Invalid JSON")
 
-    def _parse_questions(self, text: str) -> list[dict]:
-        cleaned = self._extract_json(text)
-        if not cleaned:
-            return []
-        try:
-            parsed = json.loads(cleaned)
-            if isinstance(parsed, list):
-                return [self._normalize_question(q) for q in parsed if isinstance(q, dict)]
-            return []
-        except json.JSONDecodeError:
-            return []
-
     def _extract_json(self, text: str) -> str:
+        text = re.sub(r"<think>[\s\S]*?</think>", "", text, flags=re.IGNORECASE).strip()
         text = text.strip()
         if text.startswith("```"):
             lines = text.split("\n")
@@ -454,15 +363,6 @@ Respond with ONLY valid JSON array:
             "matched_skills": self._ensure_list(self._safe_get(result, "matched_skills", [])),
             "missing_skills": self._ensure_list(self._safe_get(result, "missing_skills", [])),
             "summary": str(self._safe_get(result, "summary", "")),
-        }
-
-    def _normalize_question(self, q: dict) -> dict:
-        return {
-            "question": str(self._safe_get(q, "question", "")),
-            "category": str(self._safe_get(q, "category", "technical")),
-            "difficulty": str(self._safe_get(q, "difficulty", "medium")),
-            "focus_area": str(self._safe_get(q, "focus_area", "")),
-            "evaluation_criteria": str(self._safe_get(q, "evaluation_criteria", "")),
         }
 
     def _error_result(self, error: str) -> dict:
@@ -504,28 +404,6 @@ class ClaudeProvider(BaseAIProvider):
         except Exception as e:
             return self._error_result(str(e))
 
-    def generate_interview_questions(
-        self,
-        cv_text: str,
-        jd_title: str,
-        screening_result: dict,
-        count: int,
-        difficulty: str,
-        language: str = "en",
-    ) -> list[dict]:
-        prompt = self._build_interview_prompt(cv_text, jd_title, screening_result, count, difficulty, language)
-        try:
-            response = self._run_with_retries(
-                lambda: self.client.messages.create(
-                    model=self.model,
-                    max_tokens=3000,
-                    messages=[{"role": "user", "content": prompt}],
-                )
-            )
-            return self._parse_questions(response.content[0].text)
-        except Exception:
-            return []
-
     def _build_screening_prompt(self, cv_text: str, jd_text: str) -> str:
         return f"""You are an expert HR screening assistant. Analyze the candidate's CV against the job description and provide a detailed screening result.
 
@@ -551,28 +429,6 @@ Respond with ONLY valid JSON (no markdown):
     "summary": "A brief assessment"
 }}"""
 
-    def _build_interview_prompt(
-        self,
-        cv_text: str,
-        jd_title: str,
-        screening_result: dict,
-        count: int,
-        difficulty: str,
-        language: str,
-    ) -> str:
-        return f"""Generate {count} interview questions at {difficulty} difficulty for: {jd_title}
-
-Candidate: {cv_text[:2000]}
-Scores: skills={screening_result.get('skills_score', 0)}, exp={screening_result.get('experience_score', 0)}
-Gaps: {screening_result.get('weaknesses', [])}
-Missing: {screening_result.get('missing_skills', [])}
-Language instruction: {self._interview_language_instruction(language)}
-
-JSON array only:
-[
-    {{"question": "...", "category": "technical|behavioral|situational", "difficulty": "{difficulty}", "focus_area": "...", "evaluation_criteria": "..."}}
-]"""
-
     def _parse_response(self, text: str) -> dict:
         cleaned = self._extract_json(text)
         if not cleaned:
@@ -582,18 +438,6 @@ JSON array only:
             return self._normalize_result(result)
         except json.JSONDecodeError:
             return self._error_result("Invalid JSON")
-
-    def _parse_questions(self, text: str) -> list[dict]:
-        cleaned = self._extract_json(text)
-        if not cleaned:
-            return []
-        try:
-            parsed = json.loads(cleaned)
-            if isinstance(parsed, list):
-                return [self._normalize_question(q) for q in parsed if isinstance(q, dict)]
-            return []
-        except json.JSONDecodeError:
-            return []
 
     def _extract_json(self, text: str) -> str:
         text = text.strip()
@@ -620,15 +464,6 @@ JSON array only:
             "matched_skills": self._ensure_list(self._safe_get(result, "matched_skills", [])),
             "missing_skills": self._ensure_list(self._safe_get(result, "missing_skills", [])),
             "summary": str(self._safe_get(result, "summary", "")),
-        }
-
-    def _normalize_question(self, q: dict) -> dict:
-        return {
-            "question": str(self._safe_get(q, "question", "")),
-            "category": str(self._safe_get(q, "category", "technical")),
-            "difficulty": str(self._safe_get(q, "difficulty", "medium")),
-            "focus_area": str(self._safe_get(q, "focus_area", "")),
-            "evaluation_criteria": str(self._safe_get(q, "evaluation_criteria", "")),
         }
 
     def _error_result(self, error: str) -> dict:
@@ -684,22 +519,6 @@ class OllamaProvider(BaseAIProvider):
         except Exception as e:
             return self._error_result(str(e))
 
-    def generate_interview_questions(
-        self,
-        cv_text: str,
-        jd_title: str,
-        screening_result: dict,
-        count: int,
-        difficulty: str,
-        language: str = "en",
-    ) -> list[dict]:
-        prompt = self._build_interview_prompt(cv_text, jd_title, screening_result, count, difficulty, language)
-        try:
-            text = self._run_with_retries(lambda: self._generate(prompt))
-            return self._parse_questions(text)
-        except Exception:
-            return []
-
     def _build_screening_prompt(self, cv_text: str, jd_text: str) -> str:
         return f"""You are an expert HR screening assistant. Analyze the candidate's CV against the job description and provide a detailed screening result.
 
@@ -725,27 +544,6 @@ Respond with ONLY valid JSON:
     "summary": "A brief assessment"
 }}"""
 
-    def _build_interview_prompt(
-        self,
-        cv_text: str,
-        jd_title: str,
-        screening_result: dict,
-        count: int,
-        difficulty: str,
-        language: str,
-    ) -> str:
-        return f"""Generate {count} interview questions at {difficulty} difficulty for: {jd_title}
-
-Candidate: {cv_text[:2000]}
-Gaps: {screening_result.get('weaknesses', [])}
-Missing: {screening_result.get('missing_skills', [])}
-Language instruction: {self._interview_language_instruction(language)}
-
-JSON array:
-[
-    {{"question": "...", "category": "technical|behavioral|situational", "difficulty": "{difficulty}", "focus_area": "...", "evaluation_criteria": "..."}}
-]"""
-
     def _parse_response(self, text: str) -> dict:
         cleaned = self._extract_json(text)
         if not cleaned:
@@ -755,18 +553,6 @@ JSON array:
             return self._normalize_result(result)
         except json.JSONDecodeError:
             return self._error_result("Invalid JSON")
-
-    def _parse_questions(self, text: str) -> list[dict]:
-        cleaned = self._extract_json(text)
-        if not cleaned:
-            return []
-        try:
-            parsed = json.loads(cleaned)
-            if isinstance(parsed, list):
-                return [self._normalize_question(q) for q in parsed if isinstance(q, dict)]
-            return []
-        except json.JSONDecodeError:
-            return []
 
     def _extract_json(self, text: str) -> str:
         text = text.strip()
@@ -786,15 +572,6 @@ JSON array:
             "matched_skills": self._ensure_list(self._safe_get(result, "matched_skills", [])),
             "missing_skills": self._ensure_list(self._safe_get(result, "missing_skills", [])),
             "summary": str(self._safe_get(result, "summary", "")),
-        }
-
-    def _normalize_question(self, q: dict) -> dict:
-        return {
-            "question": str(self._safe_get(q, "question", "")),
-            "category": str(self._safe_get(q, "category", "technical")),
-            "difficulty": str(self._safe_get(q, "difficulty", "medium")),
-            "focus_area": str(self._safe_get(q, "focus_area", "")),
-            "evaluation_criteria": str(self._safe_get(q, "evaluation_criteria", "")),
         }
 
     def _error_result(self, error: str) -> dict:

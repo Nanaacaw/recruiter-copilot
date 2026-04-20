@@ -130,8 +130,6 @@ def create_screening(data: ScreeningCreate, db: Session = Depends(get_db)):
         weights = jd_data.get("criteria_weights", {})
         if existing:
             screening = _apply_screening_result(existing, ai_result, weights)
-            for question in list(screening.interview_questions):
-                db.delete(question)
         else:
             screening = Screening(
                 id=str(uuid.uuid4()),

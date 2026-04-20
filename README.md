@@ -5,7 +5,6 @@ AI Screening Copilot adalah aplikasi full-stack untuk bantu tim HR melakukan:
 - manajemen job description
 - upload dan parsing CV
 - AI screening + ranking kandidat
-- interview question generation (English + Bahasa Indonesia)
 - export hasil screening (PDF/Excel)
 
 Stack utama:
@@ -28,7 +27,7 @@ Prasyarat:
 2. Buat file environment:
    - copy `.env.example` menjadi `.env` (untuk `TUNNEL_TOKEN`)
    - copy `backend/.env.example` menjadi `backend/.env`
-   - buat `frontend/.env.local`:
+   - copy `frontend/.env.example` menjadi `frontend/.env.local` (atau buat manual):
 
 ```env
 NEXT_PUBLIC_API_URL=/backend-api
@@ -109,6 +108,20 @@ Minimum protection yang praktis:
 
 Tanpa lapisan ini, endpoint upload/screening rentan spam traffic dan abuse quota AI.
 
+Runbook Cloudflare Access (recommended) ada di:
+
+- [`docs/cloudflare-access.md`](./docs/cloudflare-access.md)
+
+Project ini sekarang juga sudah punya in-memory rate limiter di backend untuk endpoint sensitif. Konfigurasinya ada di `backend/.env`:
+
+```env
+SECURITY_RATE_LIMIT_ENABLED=true
+SECURITY_RATE_LIMIT_WINDOW_SECONDS=60
+SECURITY_RATE_LIMIT_MAX_REQUESTS=20
+SECURITY_PROTECTED_PATH_PREFIXES=["/api/candidates/upload","/api/screening","/api/export"]
+SECURITY_RATE_LIMIT_METHODS=["POST","PUT","PATCH","DELETE"]
+```
+
 ## Project Structure
 
 ```text
@@ -134,3 +147,5 @@ Dokumen detail ada di folder [`docs`](./docs/README.md):
 - build phases
 - repository notes
 - code audit
+- security hardening
+- cloudflare access setup

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import engine, Base, run_startup_migrations
+from app.core.security import anti_spam_middleware
 from app.api.v1 import api_router
 
 Base.metadata.create_all(bind=engine)
@@ -22,6 +23,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.middleware("http")(anti_spam_middleware)
 
 app.include_router(api_router)
 

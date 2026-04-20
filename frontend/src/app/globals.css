@@ -172,8 +172,11 @@
   .page-shell {
     margin-inline: auto;
     width: 100%;
-    max-width: 92rem;
-    padding: 1.25rem 1rem 2rem;
+    max-width: 90rem;
+    padding: 1rem 0.875rem 3rem;
+  }
+  .page-shell > * {
+    min-width: 0;
   }
   @media (min-width: 640px) {
     .page-shell {
@@ -183,6 +186,12 @@
   @media (min-width: 1024px) {
     .page-shell {
       padding-inline: 2rem;
+    }
+  }
+  @media (max-width: 639px) {
+    .soft-panel,
+    .sky-card {
+      box-shadow: 0 10px 30px rgba(96,165,250,0.10);
     }
   }
 }

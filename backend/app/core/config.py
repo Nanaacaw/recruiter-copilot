@@ -15,6 +15,32 @@ DEFAULT_CORS_ORIGINS = [
     "https://app.nanacaw.my.id",
     "http://app.nanacaw.my.id",
 ]
+DEFAULT_SECURITY_PROTECTED_PATH_PREFIXES = [
+    "/api/candidates/upload",
+    "/api/screening",
+    "/api/export",
+]
+DEFAULT_SECURITY_RATE_LIMIT_METHODS = ["POST", "PUT", "PATCH", "DELETE"]
+
+
+def _parse_env_list(value: Any, fallback: list[str]) -> Any:
+    if isinstance(value, str):
+        normalized = value.strip()
+        if not normalized:
+            return fallback.copy()
+
+        if normalized.startswith("["):
+            try:
+                parsed = json.loads(normalized)
+            except json.JSONDecodeError:
+                parsed = None
+            else:
+                if isinstance(parsed, list):
+                    return [str(item).strip() for item in parsed if str(item).strip()]
+
+        return [item.strip() for item in normalized.split(",") if item.strip()]
+
+    return value
 
 
 class Settings(BaseSettings):
@@ -45,11 +71,20 @@ class Settings(BaseSettings):
     AI_RETRY_BASE_DELAY_SECONDS: float = 2.0
     AI_SCREENING_DELAY_SECONDS: float = 1.0
     AI_REQUEST_TIMEOUT_SECONDS: float = 180.0
+    AI_SCREENING_MAX_CV_CHARS: int = 12000
+    AI_SCREENING_MAX_JD_CHARS: int = 5000
+    OPENAI_SCREENING_MAX_TOKENS: int = 900
 
     MAX_FILE_SIZE_MB: int = 10
     ALLOWED_EXTENSIONS: list[str] = [".pdf", ".docx"]
 
     CORS_ORIGINS: list[str] = DEFAULT_CORS_ORIGINS.copy()
+
+    SECURITY_RATE_LIMIT_ENABLED: bool = True
+    SECURITY_RATE_LIMIT_WINDOW_SECONDS: int = 60
+    SECURITY_RATE_LIMIT_MAX_REQUESTS: int = 20
+    SECURITY_PROTECTED_PATH_PREFIXES: list[str] = DEFAULT_SECURITY_PROTECTED_PATH_PREFIXES.copy()
+    SECURITY_RATE_LIMIT_METHODS: list[str] = DEFAULT_SECURITY_RATE_LIMIT_METHODS.copy()
 
     @field_validator("DEBUG", mode="before")
     @classmethod
@@ -65,23 +100,20 @@ class Settings(BaseSettings):
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: Any) -> Any:
-        if isinstance(value, str):
-            normalized = value.strip()
-            if not normalized:
-                return DEFAULT_CORS_ORIGINS.copy()
+        return _parse_env_list(value, DEFAULT_CORS_ORIGINS)
 
-            if normalized.startswith("["):
-                try:
-                    parsed = json.loads(normalized)
-                except json.JSONDecodeError:
-                    parsed = None
-                else:
-                    if isinstance(parsed, list):
-                        return [str(origin).strip() for origin in parsed if str(origin).strip()]
+    @field_validator("SECURITY_PROTECTED_PATH_PREFIXES", mode="before")
+    @classmethod
+    def parse_security_protected_path_prefixes(cls, value: Any) -> Any:
+        return _parse_env_list(value, DEFAULT_SECURITY_PROTECTED_PATH_PREFIXES)
 
-            return [origin.strip() for origin in normalized.split(",") if origin.strip()]
-
-        return value
+    @field_validator("SECURITY_RATE_LIMIT_METHODS", mode="before")
+    @classmethod
+    def parse_security_rate_limit_methods(cls, value: Any) -> Any:
+        parsed = _parse_env_list(value, DEFAULT_SECURITY_RATE_LIMIT_METHODS)
+        if isinstance(parsed, list):
+            return [str(method).upper() for method in parsed if str(method).strip()]
+        return parsed
 
     class Config:
         env_file = os.path.join(BACKEND_DIR, ".env")

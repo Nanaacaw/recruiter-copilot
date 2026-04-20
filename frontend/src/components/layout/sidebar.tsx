@@ -9,7 +9,6 @@ import {
   Users,
   Search,
   BarChart3,
-  MessageSquare,
   Download,
   Sparkles,
   ShieldCheck,
@@ -27,7 +26,6 @@ const navItems = [
   { href: "/candidates", label: "Candidates", icon: Users },
   { href: "/screening", label: "Screening", icon: Search },
   { href: "/ranking", label: "Ranking", icon: BarChart3 },
-  { href: "/interview", label: "Interview Prep", icon: MessageSquare },
   { href: "/export", label: "Export", icon: Download },
 ];
 

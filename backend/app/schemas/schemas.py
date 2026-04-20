@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class SkillRequirement(BaseModel):
@@ -116,24 +116,3 @@ class ScreeningDetailResponse(ScreeningResponse):
 
 class CompareRequest(BaseModel):
     screening_ids: list[str]
-
-
-class InterviewQuestionGenerate(BaseModel):
-    screening_id: str
-    count: int = 10
-    difficulty: str = "medium"
-    language: str = Field(default="en", pattern="^(en|id)$")
-
-
-class InterviewQuestionResponse(BaseModel):
-    id: str
-    screening_id: str
-    language: str
-    question: str
-    category: str
-    difficulty: str
-    focus_area: str
-    evaluation_criteria: str
-
-    class Config:
-        from_attributes = True

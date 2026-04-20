@@ -33,7 +33,7 @@ function MetricCard({
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <Card className="border border-sky-100 bg-white shadow-sm">
+    <Card className="h-full border border-sky-100 bg-white shadow-sm">
       <CardContent className="p-4 sm:p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -123,8 +123,8 @@ export default function DashboardPage() {
               cta: "Open screening",
             }
           : {
-              title: "Move into ranking and interview prep",
-              body: "The workspace already has enough signal to compare candidates and prepare follow-up interviews.",
+              title: "Review ranking and export reports",
+              body: "The workspace already has enough signal to compare candidates and prepare recruiter-ready handoff files.",
               href: "/ranking",
               cta: "Open ranking",
             };
@@ -144,8 +144,8 @@ export default function DashboardPage() {
                 A simpler dashboard for tracking pipeline readiness and deciding the next step.
               </h2>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
-                This version removes the heavier visual treatment and keeps the page focused on what HR usually needs first:
-                current totals, workspace status, the next move, and a short view of recent activity.
+                Keep the page focused on what HR usually needs first: current totals, workspace status,
+                the next move, and a short view of recent activity.
               </p>
             </div>
 
@@ -198,7 +198,7 @@ export default function DashboardPage() {
         <MetricCard
           label="Completed Screenings"
           value={loading ? 0 : sortedScreenings.length}
-          helper="Stored fit results that can feed ranking, export, and interview prep."
+          helper="Stored fit results that can feed ranking and recruiter handoff reports."
           icon={TrendingUp}
         />
       </section>
@@ -261,15 +261,15 @@ export default function DashboardPage() {
                   href: "/screening",
                 },
                 {
-                  title: "4. Compare and move forward",
-                  desc: "Use ranking and interview prep to guide recruiter conversations.",
+                  title: "4. Rank and export",
+                  desc: "Compare the shortlist, then export reports for recruiter handoff.",
                   href: "/ranking",
                 },
               ].map((item) => (
                 <Link
                   key={item.title}
                   href={item.href}
-                  className="rounded-[1.5rem] border border-sky-100 bg-slate-50/70 p-5 transition hover:border-sky-200 hover:bg-white"
+                  className="h-full rounded-[1.5rem] border border-sky-100 bg-slate-50/70 p-4 transition hover:border-sky-200 hover:bg-white sm:p-5"
                 >
                   <h4 className="text-base font-semibold text-slate-900">{item.title}</h4>
                   <p className="mt-2 text-sm leading-6 text-slate-500">{item.desc}</p>

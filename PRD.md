@@ -52,14 +52,7 @@ An AI copilot that automates CV screening by intelligently matching candidate pr
 - Sort by different criteria (overall score, experience, education, etc.)
 - Visual score breakdown charts (radar/spider chart)
 
-### F5. Interview Question Generator
-- Generate tailored interview questions based on CV-JD gaps
-- Categorized by: Technical, Behavioral, Situational
-- Difficulty levels: Easy, Medium, Hard
-- Focus areas based on identified weaknesses
-- Suggested expected answers / evaluation criteria
-
-### F6. Export & Reporting
+### F5. Export & Reporting
 - Export screening results to PDF report
 - Export candidate list to Excel/CSV
 - Individual candidate report with score breakdown
@@ -90,8 +83,7 @@ An AI copilot that automates CV screening by intelligently matching candidate pr
 1. From ranking view, select 2-4 candidates
 2. Click "Compare"
 3. View side-by-side score breakdown
-4. Generate interview questions for shortlisted candidates
-5. Export final report
+4. Export final report
 
 ---
 
@@ -105,8 +97,8 @@ An AI copilot that automates CV screening by intelligently matching candidate pr
 │  │Dashboard│ │  JD Mgmt │ │   Screening  │ │
 │  └─────────┘ └──────────┘ └──────────────┘ │
 │  ┌──────────┐ ┌──────────┐ ┌──────────────┐ │
-│  │ Ranking  │ │Interview │ │   Export     │ │
-│  │   View   │ │Questions │ │   Reports    │ │
+│  │ Ranking  │ │Compare │ │   Export     │ │
+│  │   View   │ │Results │ │   Reports    │ │
 │  └──────────┘ └──────────┘ └──────────────┘ │
 └──────────────────┬──────────────────────────┘
                    │ REST API
@@ -118,7 +110,7 @@ An AI copilot that automates CV screening by intelligently matching candidate pr
 │  │(PDF/DOCX)│ │AI Provider│ │  Service    │ │
 │  └──────────┘ └───────────┘ └────────────┘ │
 │  ┌──────────┐ ┌───────────┐ ┌────────────┐ │
-│  │JD Service│ │Screening  │ │  Interview  │ │
+│  │JD Service│ │Screening  │ │  Compare  │ │
 │  │          │ │ Service   │ │  Service    │ │
 │  └──────────┘ └───────────┘ └────────────┘ │
 └──────────────────┬──────────────────────────┘
@@ -191,16 +183,6 @@ An AI copilot that automates CV screening by intelligently matching candidate pr
 | missing_skills | JSON | Skills missing from JD |
 | screening_date | datetime | When screening was performed |
 
-### InterviewQuestion
-| Field | Type | Description |
-|-------|------|-------------|
-| id | UUID | Primary key |
-| screening_id | UUID | FK to Screening |
-| question | text | Interview question |
-| category | string | technical/behavioral/situational |
-| difficulty | string | easy/medium/hard |
-| focus_area | string | What skill/gap this targets |
-| evaluation_criteria | text | What to look for in answer |
 
 ---
 
@@ -230,12 +212,6 @@ An AI copilot that automates CV screening by intelligently matching candidate pr
 | GET | /api/screening/{jd_id} | Get all screenings for a JD |
 | GET | /api/screening/result/{id} | Get screening result detail |
 | POST | /api/screening/compare | Compare multiple screenings |
-
-### Interview Questions
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/interview/generate | Generate questions for a screening |
-| GET | /api/interview/{screening_id} | Get generated questions |
 
 ### Export
 | Method | Endpoint | Description |
@@ -275,12 +251,7 @@ An AI copilot that automates CV screening by intelligently matching candidate pr
    - Side-by-side comparison view
    - Filter and sort controls
 
-6. **Interview Prep** (`/interview/{screening_id}`)
-   - Generated questions grouped by category
-   - Focus areas highlighted
-   - Regenerate questions button
-
-7. **Export** (`/export`)
+6. **Export** (`/export`)
    - Export options per JD
    - Download PDF/Excel reports
 
@@ -317,7 +288,6 @@ An AI copilot that automates CV screening by intelligently matching candidate pr
 - Basic UI with all core flows
 
 ### Phase 2
-- Interview Question Generator
 - Export to PDF/Excel
 - Side-by-side comparison
 - JD templates library

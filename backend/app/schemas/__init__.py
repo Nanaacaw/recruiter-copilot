@@ -13,6 +13,4 @@ __all__ = [
     "ScreeningResponse",
     "ScreeningDetailResponse",
     "CompareRequest",
-    "InterviewQuestionGenerate",
-    "InterviewQuestionResponse",
 ]

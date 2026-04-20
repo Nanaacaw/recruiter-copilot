@@ -1,13 +1,19 @@
 import type {
   Candidate,
   HealthStatus,
-  InterviewLanguage,
-  InterviewQuestion,
   JobDescription,
   Screening,
 } from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/backend-api";
+
+type ApiErrorPayload = {
+  detail?: string;
+};
+
+function isFailedFetch(error: unknown): error is TypeError {
+  return error instanceof TypeError && error.message === "Failed to fetch";
+}
 
 class ApiClient {
   private baseUrl: string;
@@ -28,21 +34,21 @@ class ApiClient {
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ detail: res.statusText }));
+        const error = await res.json().catch((): ApiErrorPayload => ({ detail: res.statusText }));
         throw new Error(error.detail || "API request failed");
       }
 
       if (res.status === 204) return undefined as T;
       return res.json();
-    } catch (err: any) {
-      if (err.name === "TypeError" && err.message === "Failed to fetch") {
+    } catch (err: unknown) {
+      if (isFailedFetch(err)) {
         throw new Error(`Cannot connect to backend server. Check the API endpoint configuration: ${this.baseUrl}`);
       }
       throw err;
     }
   }
 
-  async uploadFiles(endpoint: string, files: File[]): Promise<any> {
+  async uploadFiles<T>(endpoint: string, files: File[]): Promise<T> {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
 
@@ -53,12 +59,12 @@ class ApiClient {
       });
 
       if (!res.ok) {
-        const error = await res.json().catch(() => ({ detail: res.statusText }));
+        const error = await res.json().catch((): ApiErrorPayload => ({ detail: res.statusText }));
         throw new Error(error.detail || "Upload failed");
       }
       return res.json();
-    } catch (err: any) {
-      if (err.name === "TypeError" && err.message === "Failed to fetch") {
+    } catch (err: unknown) {
+      if (isFailedFetch(err)) {
         throw new Error(`Cannot connect to backend server. Check the API endpoint configuration: ${this.baseUrl}`);
       }
       throw err;
@@ -91,7 +97,7 @@ class ApiClient {
   // Candidates
   getCandidates = () => this.request<Candidate[]>("/candidates");
   getCandidate = (id: string) => this.request<Candidate>(`/candidates/${id}`);
-  uploadCVs = (files: File[]) => this.uploadFiles("/candidates/upload", files);
+  uploadCVs = (files: File[]) => this.uploadFiles<Candidate[]>("/candidates/upload", files);
   deleteCandidate = (id: string) =>
     this.request<void>(`/candidates/${id}`, { method: "DELETE" });
 
@@ -105,23 +111,6 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify({ screening_ids: screeningIds }),
     });
-
-  // Interview Questions
-  generateQuestions = (
-    screeningId: string,
-    options?: { count?: number; difficulty?: string; language?: InterviewLanguage }
-  ) =>
-    this.request<InterviewQuestion[]>("/interview/generate", {
-      method: "POST",
-      body: JSON.stringify({
-        screening_id: screeningId,
-        count: options?.count ?? 10,
-        difficulty: options?.difficulty ?? "medium",
-        language: options?.language ?? "en",
-      }),
-    });
-  getQuestions = (screeningId: string, language: InterviewLanguage = "en") =>
-    this.request<InterviewQuestion[]>(`/interview/${screeningId}?language=${language}`);
 
   // Export
   exportPdf = (screeningId: string) =>

@@ -21,8 +21,7 @@ By the end of the build, the product should support:
 2. uploading and parsing CVs
 3. screening candidates against a JD with AI
 4. ranking candidates
-5. generating interview questions
-6. exporting results
+5. exporting results
 
 The important learning point is that this should not be built all at once. The right move is to create a thin vertical slice first, then layer capabilities in a controlled order.
 
@@ -59,7 +58,6 @@ You should define four core concepts:
 - job description
 - candidate
 - screening result
-- interview question
 
 ### Why this phase matters
 
@@ -128,7 +126,7 @@ Build the first complete business entity from frontend to database.
 
 ### Why this is the right first feature
 
-Job descriptions are the anchor of the whole product. Candidates, screenings, and interview questions all depend on them.
+Job descriptions are the anchor of the whole product. Candidates and screenings both depend on them.
 
 This is also the safest vertical slice because it has:
 
@@ -289,30 +287,7 @@ A technically correct score is not enough. Recruiters need trust and interpretab
 
 A user can compare multiple candidates without reading raw JSON or digging through database rows.
 
-## Phase 7: Interview Question Generation
-
-### Goal
-
-Generate actionable next-step questions from screening gaps.
-
-### Build in this phase
-
-- interview route in `backend/app/api/v1/interview.py`
-- AI question generation in `backend/app/services/ai_providers.py`
-- question caching in database tables
-- interview page in `frontend/src/app/interview/page.tsx`
-
-### Design principle
-
-Questions should depend on weaknesses, missing skills, red flags, and candidate context from a specific screening result.
-
-This phase belongs after screening because interview generation is a downstream action, not a primary record.
-
-### Exit criterion
-
-From one screening result, the system can generate and display reusable interview questions.
-
-## Phase 8: Export and Reporting
+## Phase 7: Export and Reporting
 
 ### Goal
 
@@ -384,10 +359,9 @@ Example sequence:
 4. `feat: add screening workflow with placeholder scoring`
 5. `feat: integrate AI screening provider`
 6. `feat: add ranking and dashboard views`
-7. `feat: add interview question generation`
-8. `feat: add export endpoints and UI`
-9. `docs: add architecture and implementation notes`
-10. `chore: harden config, caching, and repository structure`
+7. `feat: add export endpoints and UI`
+8. `docs: add architecture and implementation notes`
+9. `chore: harden config, caching, and repository structure`
 
 This makes your learning history readable later.
 
@@ -416,8 +390,7 @@ If you want to learn from the current codebase without getting overwhelmed, foll
 4. read `backend/app/api/v1/candidates.py` and `backend/app/services/cv_parser.py`
 5. read `backend/app/api/v1/screening.py`, `backend/app/services/ai_service.py`, and `backend/app/services/ai_providers.py`
 6. read `frontend/src/app/screening/page.tsx` and `frontend/src/app/ranking/page.tsx`
-7. read `backend/app/api/v1/interview.py` and `frontend/src/app/interview/page.tsx`
-8. read `backend/app/api/v1/export.py` and `backend/app/services/export_service.py`
+7. read `backend/app/api/v1/export.py` and `backend/app/services/export_service.py`
 
 That order mirrors the build order and makes the repo much easier to absorb.
 

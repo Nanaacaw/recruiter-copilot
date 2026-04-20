@@ -17,7 +17,13 @@ Frontend akan berjalan di `http://localhost:3000`.
 
 ## Environment
 
-Buat `frontend/.env.local`:
+Copy template:
+
+```powershell
+Copy-Item .env.example .env.local
+```
+
+Atau buat `frontend/.env.local` manual:
 
 ```env
 NEXT_PUBLIC_API_URL=/backend-api

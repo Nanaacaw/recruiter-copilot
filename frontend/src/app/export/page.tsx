@@ -31,20 +31,23 @@ export default function ExportPage() {
     ? `${selectedJob.title}${selectedJob.department ? ` - ${selectedJob.department}` : ""}`
     : undefined;
 
-  const handleExportPdf = async (screeningId: string, name: string) => {
+  const getErrorMessage = (error: unknown, fallback: string) =>
+    error instanceof Error ? error.message : fallback;
+
+  const handleExportPdf = async (screeningId: string) => {
     setExporting("pdf-" + screeningId);
-    try { await api.exportPdf(screeningId); } catch (err: any) { alert(err.message); } finally { setExporting(null); }
+    try { await api.exportPdf(screeningId); } catch (err: unknown) { alert(getErrorMessage(err, "Export PDF failed")); } finally { setExporting(null); }
   };
 
   const handleExportBatch = async () => {
     if (!selectedJd) return;
     setExporting("batch");
-    try { await api.exportExcel(selectedJd); } catch (err: any) { alert(err.message); } finally { setExporting(null); }
+    try { await api.exportExcel(selectedJd); } catch (err: unknown) { alert(getErrorMessage(err, "Export Excel failed")); } finally { setExporting(null); }
   };
 
   return (
-    <div className="page-shell space-y-8">
-      <section className="hero-mesh soft-panel overflow-hidden rounded-[2rem] border-0">
+    <div className="page-shell space-y-6 sm:space-y-8">
+      <section className="hero-mesh soft-panel overflow-hidden rounded-[1.5rem] border-0 sm:rounded-[2rem]">
         <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[1.2fr_0.8fr] lg:p-8">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
@@ -80,7 +83,7 @@ export default function ExportPage() {
 
           <div className="space-y-4">
             <Card className="sky-card rounded-[1.75rem] border-0">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Export volume</p>
@@ -97,7 +100,7 @@ export default function ExportPage() {
             </Card>
 
             <Card className="soft-panel rounded-[1.75rem] border-0">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <p className="text-sm font-semibold text-slate-900">Export options</p>
                 <div className="mt-4 space-y-3">
                   <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
@@ -106,7 +109,7 @@ export default function ExportPage() {
                   </div>
                   <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
                     <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Candidate PDF</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">Best for one-candidate interview preparation</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">Best for one-candidate review packets</p>
                   </div>
                 </div>
               </CardContent>
@@ -168,7 +171,7 @@ export default function ExportPage() {
                       <Badge className={`rounded-full border-0 bg-white px-3 py-1.5 ${scoreColor}`}>
                         Score {s.overall_score.toFixed(0)}
                       </Badge>
-                      <Button variant="outline" size="sm" onClick={() => handleExportPdf(s.id, s.candidate?.name || "")} disabled={exporting === "pdf-" + s.id} className="h-10 w-full gap-2 rounded-xl border-sky-100 bg-white/88 sm:w-auto">
+                      <Button variant="outline" size="sm" onClick={() => handleExportPdf(s.id)} disabled={exporting === "pdf-" + s.id} className="h-10 w-full gap-2 rounded-xl border-sky-100 bg-white/88 sm:w-auto">
                         {exporting === "pdf-" + s.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                         Export PDF
                       </Button>

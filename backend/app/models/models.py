@@ -61,19 +61,3 @@ class Screening(Base):
 
     candidate = relationship("Candidate", back_populates="screenings")
     job_description = relationship("JobDescription", back_populates="screenings")
-    interview_questions = relationship("InterviewQuestion", back_populates="screening", cascade="all, delete-orphan")
-
-
-class InterviewQuestion(Base):
-    __tablename__ = "interview_questions"
-
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    screening_id = Column(String, ForeignKey("screenings.id", ondelete="CASCADE"), nullable=False)
-    language = Column(String(10), default="en")
-    question = Column(Text, nullable=False)
-    category = Column(String(50), default="technical")
-    difficulty = Column(String(20), default="medium")
-    focus_area = Column(String(255), default="")
-    evaluation_criteria = Column(Text, default="")
-
-    screening = relationship("Screening", back_populates="interview_questions")

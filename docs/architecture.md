@@ -8,16 +8,15 @@
 - upload and parse CVs
 - screen candidates against a job description using AI
 - rank candidates
-- generate interview questions
 - export results to PDF and Excel
 
 The system is intentionally simple for MVP use:
 
 - a Next.js frontend provides the operator workflow
 - a FastAPI backend owns business logic
-- SQLite stores job descriptions, candidates, screenings, and interview questions
+- SQLite stores job descriptions, candidates, and screenings
 - the file system stores uploaded CV files
-- an AI provider gateway performs screening and interview generation
+- an AI provider gateway performs screening analysis
 
 ## Runtime Topology
 
@@ -53,8 +52,6 @@ Main route groups:
   Candidate-to-JD screening
 - `/ranking`
   Ranked screening results
-- `/interview`
-  Interview question generation
 - `/export`
   PDF and Excel downloads
 
@@ -89,7 +86,7 @@ Key backend modules:
 - `ai_service.py`
   Selects the active AI provider and attaches provider metadata to AI results
 - `ai_providers.py`
-  Implements provider-specific screening and interview generation
+  Implements provider-specific screening calls and response normalization
 - `export_service.py`
   Builds PDF and Excel exports
 

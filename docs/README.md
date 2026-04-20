@@ -18,6 +18,12 @@ This folder contains the operational and technical documentation for `ai_screeni
   AI provider design, model selection, retry logic, and failure-handling rules.
 - [repository-notes.md](./repository-notes.md)
   Repository layout, nested `frontend` Git repo behavior, and secret-handling notes.
+- [code-audit.md](./code-audit.md)
+  Findings for potentially unused files/dependencies and recommended cleanup order.
+- [security.md](./security.md)
+  Current anti-spam baseline, environment knobs, and practical hardening roadmap.
+- [cloudflare-access.md](./cloudflare-access.md)
+  Practical setup to lock `app` and `api` behind Cloudflare Access login policies.
 
 ## Current Runtime Defaults
 
@@ -47,3 +53,6 @@ Keep real infrastructure values in local `.env` files or deployment configuratio
 4. Use [database.md](./database.md) and [api-reference.md](./api-reference.md) during implementation
 5. Read [ai-integration.md](./ai-integration.md) before changing provider or model behavior
 6. Read [repository-notes.md](./repository-notes.md) before pushing Git changes involving `frontend/`
+7. Review [code-audit.md](./code-audit.md) before cleanup/refactor batches
+8. Review [security.md](./security.md) before exposing public routes to the internet
+9. Follow [cloudflare-access.md](./cloudflare-access.md) to gate public website access

@@ -138,9 +138,9 @@ export default function JobDescriptionsPage() {
     setNewCert("");
   };
 
-  const loadJds = async () => {
+  const loadJds = async (query = search) => {
     try {
-      const data = await api.getJobDescriptions(search || undefined);
+      const data = await api.getJobDescriptions(query || undefined);
       setJds(data);
     } catch {
       setJds([]);
@@ -150,7 +150,24 @@ export default function JobDescriptionsPage() {
   };
 
   useEffect(() => {
-    loadJds();
+    let ignore = false;
+
+    async function load() {
+      try {
+        const data = await api.getJobDescriptions(search || undefined);
+        if (!ignore) setJds(data);
+      } catch {
+        if (!ignore) setJds([]);
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      ignore = true;
+    };
   }, [search]);
 
   const handleSave = async () => {
@@ -271,7 +288,7 @@ export default function JobDescriptionsPage() {
   };
 
   return (
-    <div className="page-shell space-y-8">
+    <div className="page-shell space-y-6 sm:space-y-8">
       <Dialog
         open={dialogOpen}
         onOpenChange={(open) => {

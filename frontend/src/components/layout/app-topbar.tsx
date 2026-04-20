@@ -28,10 +28,6 @@ const routeMeta: Record<string, { title: string; subtitle: string }> = {
     title: "Ranking Board",
     subtitle: "Review candidate order, compare strengths, and decide who moves forward.",
   },
-  "/interview": {
-    title: "Interview Prep Desk",
-    subtitle: "Generate focused questions from the gaps uncovered during screening.",
-  },
   "/export": {
     title: "Export Center",
     subtitle: "Download candidate reports and handoff-ready recruiter artifacts.",
@@ -79,8 +75,8 @@ export function AppTopbar() {
       <div className="relative overflow-hidden px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(125,211,252,0.18),transparent_34%),radial-gradient(circle_at_top_right,rgba(96,165,250,0.14),transparent_28%)]" />
         <div className="absolute inset-0 blueprint-grid opacity-40" />
-        <div className="relative flex flex-col gap-4 pl-14 sm:pl-16 lg:pl-0 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1">
+        <div className="relative flex min-w-0 flex-col gap-4 pl-14 sm:pl-16 lg:pl-0 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0 space-y-1">
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/90 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.24em] text-slate-500 shadow-sm">
               <Orbit className="h-3.5 w-3.5 text-blue-600" />
               System Workspace
@@ -91,7 +87,7 @@ export function AppTopbar() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 md:justify-start lg:justify-end">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 md:justify-start lg:justify-end">
             <Badge className="rounded-full border border-sky-100 bg-white px-3 py-1.5 text-slate-700">
               <Workflow className="mr-1.5 h-3.5 w-3.5" />
               Recruiter Flow

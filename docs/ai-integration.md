@@ -87,6 +87,23 @@ Why this exists:
 - reduces repeat 429s in small batch runs
 - smooths gateway utilization
 
+## Timeout Pattern: `500` Around 60 Seconds
+
+If logs show `POST /v1/chat/completions` with `500` near `~60000ms`, usually the OpenAI-compatible gateway/origin timed out before the model finished.
+
+Common triggers:
+
+- heavy model (for example 9B/14B) under load
+- CV text too long
+- output token budget too large
+- too many retries causing repeated long requests
+
+Recommended first response:
+
+- switch model to `qwen2.5:7b`
+- reduce retry count
+- cap prompt size and output tokens (now configurable)
+
 ## Failure Normalization
 
 If an AI call fails, the screening layer returns a structured fallback result:
@@ -120,6 +137,9 @@ AI_MAX_RETRIES=3
 AI_RETRY_BASE_DELAY_SECONDS=2
 AI_SCREENING_DELAY_SECONDS=1
 AI_REQUEST_TIMEOUT_SECONDS=180
+AI_SCREENING_MAX_CV_CHARS=12000
+AI_SCREENING_MAX_JD_CHARS=5000
+OPENAI_SCREENING_MAX_TOKENS=900
 ```
 
 Fallback/provider-specific variables:
