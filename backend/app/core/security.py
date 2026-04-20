@@ -1,11 +1,16 @@
 import threading
 import time
+from datetime import datetime, timedelta, timezone
+from secrets import compare_digest
 from collections import defaultdict, deque
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from jose import JWTError, jwt
 
 from app.core.config import settings
+
+AUTH_ALGORITHM = "HS256"
 
 
 class InMemoryRateLimiter:
@@ -45,6 +50,66 @@ def _is_protected_path(path: str) -> bool:
 def _is_protected_method(method: str) -> bool:
     allowed_methods = {m.upper() for m in (settings.SECURITY_RATE_LIMIT_METHODS or [])}
     return method.upper() in allowed_methods
+
+
+def create_access_token(username: str) -> str:
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.AUTH_TOKEN_EXPIRE_MINUTES)
+    payload = {
+        "sub": username,
+        "exp": expires_at,
+    }
+    return jwt.encode(payload, settings.AUTH_SECRET_KEY, algorithm=AUTH_ALGORITHM)
+
+
+def verify_login(username: str, password: str) -> bool:
+    configured_username = settings.AUTH_USERNAME or ""
+    configured_password = settings.AUTH_PASSWORD or ""
+    return compare_digest(username, configured_username) and compare_digest(password, configured_password)
+
+
+def decode_access_token(token: str) -> str | None:
+    try:
+        payload = jwt.decode(token, settings.AUTH_SECRET_KEY, algorithms=[AUTH_ALGORITHM])
+    except JWTError:
+        return None
+
+    subject = payload.get("sub")
+    if not isinstance(subject, str) or not subject:
+        return None
+    return subject
+
+
+def _extract_bearer_token(request: Request) -> str:
+    authorization = request.headers.get("authorization", "")
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token.strip():
+        return ""
+    return token.strip()
+
+
+def _is_auth_public_path(path: str) -> bool:
+    prefixes = settings.AUTH_PUBLIC_PATH_PREFIXES or []
+    return any(path.startswith(prefix) for prefix in prefixes)
+
+
+async def auth_middleware(request: Request, call_next):
+    if not settings.AUTH_ENABLED:
+        return await call_next(request)
+
+    path = request.url.path
+    if request.method.upper() == "OPTIONS" or not path.startswith("/api") or _is_auth_public_path(path):
+        return await call_next(request)
+
+    token = _extract_bearer_token(request)
+    username = decode_access_token(token) if token else None
+    if not username:
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Authentication required. Please log in again."},
+        )
+
+    request.state.auth_user = username
+    return await call_next(request)
 
 
 def _extract_client_ip(request: Request) -> str:
