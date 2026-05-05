@@ -15,6 +15,15 @@ router = APIRouter(prefix="/screening", tags=["Screening"])
 
 
 def _screening_failed(screening: Screening) -> bool:
+    all_zero = (
+        screening.overall_score <= 0
+        and screening.skills_score <= 0
+        and screening.experience_score <= 0
+        and screening.education_score <= 0
+    )
+    if all_zero:
+        return True
+
     ai_analysis = screening.ai_analysis or {}
     summary = ""
     if isinstance(ai_analysis, dict):
@@ -31,6 +40,7 @@ def _screening_failed(screening: Screening) -> bool:
             or "ai provider error" in weakness_text
             or "quota exceeded" in weakness_text
             or "429" in weakness_text
+            or "invalid json" in weakness_text
         )
     )
 
@@ -87,6 +97,14 @@ def create_screening(data: ScreeningCreate, db: Session = Depends(get_db)):
     if not jd:
         raise HTTPException(status_code=404, detail="Job description not found")
 
+    candidate_map: dict[str, Candidate] = {
+        c.id: c
+        for c in db.query(Candidate).filter(Candidate.id.in_(data.candidate_ids)).all()
+    }
+    missing_ids = [cid for cid in data.candidate_ids if cid not in candidate_map]
+    if missing_ids:
+        raise HTTPException(status_code=404, detail=f"Candidates not found: {', '.join(missing_ids)}")
+
     results = []
     processed_count = 0
     jd_data = {
@@ -102,9 +120,7 @@ def create_screening(data: ScreeningCreate, db: Session = Depends(get_db)):
     }
 
     for candidate_id in data.candidate_ids:
-        candidate = db.query(Candidate).filter(Candidate.id == candidate_id).first()
-        if not candidate:
-            raise HTTPException(status_code=404, detail=f"Candidate not found: {candidate_id}")
+        candidate = candidate_map[candidate_id]
 
         existing = (
             db.query(Screening)
@@ -118,6 +134,14 @@ def create_screening(data: ScreeningCreate, db: Session = Depends(get_db)):
         if existing and not should_refresh_existing:
             results.append(existing)
             continue
+
+        cv_data = candidate.parsed_data or {}
+        raw_text = cv_data.get("raw_text", "") if isinstance(cv_data, dict) else ""
+        if not raw_text or not raw_text.strip():
+            raise HTTPException(
+                status_code=422,
+                detail=f"CV for '{candidate.name}' has no extractable text. The file may be a scanned image. Please re-upload a text-based PDF or DOCX."
+            )
 
         try:
             if processed_count > 0 and settings.AI_SCREENING_DELAY_SECONDS > 0:

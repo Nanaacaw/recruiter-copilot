@@ -78,7 +78,7 @@ class Settings(BaseSettings):
     AI_REQUEST_TIMEOUT_SECONDS: float = 180.0
     AI_SCREENING_MAX_CV_CHARS: int = 12000
     AI_SCREENING_MAX_JD_CHARS: int = 5000
-    OPENAI_SCREENING_MAX_TOKENS: int = 900
+    OPENAI_SCREENING_MAX_TOKENS: int = 0
 
     MAX_FILE_SIZE_MB: int = 10
     ALLOWED_EXTENSIONS: list[str] = [".pdf", ".docx"]

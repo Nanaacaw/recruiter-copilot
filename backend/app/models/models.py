@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Column, String, Text, Float, Integer, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship
@@ -20,8 +20,8 @@ class JobDescription(Base):
     education_requirements = Column(JSON, default=list)
     certifications = Column(JSON, default=list)
     criteria_weights = Column(JSON, default=dict)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     screenings = relationship("Screening", back_populates="job_description", cascade="all, delete-orphan")
 
@@ -35,7 +35,7 @@ class Candidate(Base):
     phone = Column(String(50), default="")
     raw_cv_path = Column(String(500), nullable=False)
     parsed_data = Column(JSON, default=dict)
-    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    uploaded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     screenings = relationship("Screening", back_populates="candidate", cascade="all, delete-orphan")
 
@@ -57,7 +57,7 @@ class Screening(Base):
     red_flags = Column(JSON, default=list)
     matched_skills = Column(JSON, default=list)
     missing_skills = Column(JSON, default=list)
-    screening_date = Column(DateTime, default=datetime.utcnow)
+    screening_date = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     candidate = relationship("Candidate", back_populates="screenings")
     job_description = relationship("JobDescription", back_populates="screenings")

@@ -22,43 +22,63 @@ def list_candidates(db: Session = Depends(get_db)):
 async def upload_cvs(files: list[UploadFile] = File(...), db: Session = Depends(get_db)):
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
     candidates = []
+    saved_file_paths: list[str] = []
 
-    for file in files:
-        ext = os.path.splitext(file.filename)[1].lower()
-        if ext not in settings.ALLOWED_EXTENSIONS:
-            raise HTTPException(status_code=400, detail=f"Unsupported file format: {ext}")
+    try:
+        for file in files:
+            ext = os.path.splitext(file.filename)[1].lower()
+            if ext not in settings.ALLOWED_EXTENSIONS:
+                raise HTTPException(status_code=400, detail=f"Unsupported file format: {ext}")
 
-        file_id = str(uuid.uuid4())
-        file_path = os.path.join(settings.UPLOAD_DIR, f"{file_id}{ext}")
+            file_id = str(uuid.uuid4())
+            file_path = os.path.join(settings.UPLOAD_DIR, f"{file_id}{ext}")
 
-        content = await file.read()
-        if len(content) > settings.MAX_FILE_SIZE_MB * 1024 * 1024:
-            raise HTTPException(status_code=400, detail=f"File too large: {file.filename}")
+            content = await file.read()
+            if len(content) > settings.MAX_FILE_SIZE_MB * 1024 * 1024:
+                raise HTTPException(status_code=400, detail=f"File too large: {file.filename}")
 
-        with open(file_path, "wb") as f:
-            f.write(content)
+            with open(file_path, "wb") as f:
+                f.write(content)
+            saved_file_paths.append(file_path)
 
-        try:
-            parsed_data = cv_parser_service.parse(file_path)
-        except Exception as e:
-            os.remove(file_path)
-            raise HTTPException(status_code=422, detail=f"Failed to parse CV: {str(e)}")
+            try:
+                parsed_data = cv_parser_service.parse(file_path)
+            except Exception as e:
+                raise HTTPException(status_code=422, detail=f"Failed to parse CV '{file.filename}': {str(e)}")
 
-        candidate = Candidate(
-            id=str(uuid.uuid4()),
-            name=parsed_data.get("name", file.filename),
-            email=parsed_data.get("email", ""),
-            phone=parsed_data.get("phone", ""),
-            raw_cv_path=file_path,
-            parsed_data=parsed_data,
-        )
-        db.add(candidate)
-        candidates.append(candidate)
+            raw_text = parsed_data.get("raw_text", "")
+            if not raw_text or not raw_text.strip():
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"CV '{file.filename}' appears to be a scanned image or has no extractable text. Please upload a text-based PDF or DOCX."
+                )
 
-    db.commit()
-    for c in candidates:
-        db.refresh(c)
-    return candidates
+            candidate = Candidate(
+                id=str(uuid.uuid4()),
+                name=parsed_data.get("name", file.filename),
+                email=parsed_data.get("email", ""),
+                phone=parsed_data.get("phone", ""),
+                raw_cv_path=file_path,
+                parsed_data=parsed_data,
+            )
+            db.add(candidate)
+            candidates.append(candidate)
+
+        db.commit()
+        for c in candidates:
+            db.refresh(c)
+        return candidates
+
+    except HTTPException:
+        for path in saved_file_paths:
+            if os.path.exists(path):
+                os.remove(path)
+        raise
+    except Exception as e:
+        for path in saved_file_paths:
+            if os.path.exists(path):
+                os.remove(path)
+        raise HTTPException(status_code=500, detail=f"Unexpected error during upload: {str(e)}")
 
 
 @router.get("/{candidate_id}", response_model=CandidateResponse)
