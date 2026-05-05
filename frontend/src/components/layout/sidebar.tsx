@@ -4,17 +4,17 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
+  SquaresFour,
   FileText,
   Users,
-  Search,
-  BarChart3,
-  Download,
-  Sparkles,
+  MagnifyingGlass,
+  ChartBar,
+  DownloadSimple,
+  Sparkle,
   ShieldCheck,
-  Menu,
-  LogOut,
-} from "lucide-react";
+  List,
+  SignOut,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api";
 import type { HealthStatus } from "@/types";
@@ -22,12 +22,12 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/", label: "Dashboard", icon: SquaresFour },
   { href: "/job-descriptions", label: "Job Descriptions", icon: FileText },
   { href: "/candidates", label: "Candidates", icon: Users },
-  { href: "/screening", label: "Screening", icon: Search },
-  { href: "/ranking", label: "Ranking", icon: BarChart3 },
-  { href: "/export", label: "Export", icon: Download },
+  { href: "/screening", label: "Screening", icon: MagnifyingGlass },
+  { href: "/ranking", label: "Ranking", icon: ChartBar },
+  { href: "/export", label: "Export", icon: DownloadSimple },
 ];
 
 const providerLabels: Record<string, string> = {
@@ -38,10 +38,10 @@ const providerLabels: Record<string, string> = {
 };
 
 const providerColors: Record<string, string> = {
-  gemini: "from-sky-400 to-blue-500",
-  openai: "from-cyan-400 to-blue-500",
-  claude: "from-amber-400 to-orange-500",
-  ollama: "from-blue-400 to-indigo-500",
+  gemini: "bg-primary",
+  openai: "bg-primary",
+  claude: "bg-primary",
+  ollama: "bg-primary",
 };
 
 function SidebarPanel({
@@ -59,45 +59,38 @@ function SidebarPanel({
 }) {
   const provider = (aiStatus?.ai_provider || "openai").toLowerCase();
   const providerLabel = providerLabels[provider] || provider;
-  const providerColor = providerColors[provider] || "from-slate-500 to-cyan-400";
   const backendHealthy = aiStatus?.status === "healthy";
 
   return (
     <div
       className={cn(
-        "relative flex h-full flex-col overflow-hidden bg-[linear-gradient(180deg,rgba(250,252,255,0.98),rgba(237,246,255,0.98))]",
-        mobile ? "rounded-[1.75rem]" : "border-r border-sky-100/90"
+        "relative flex h-full flex-col overflow-hidden bg-card/80 backdrop-blur-3xl shadow-[4px_0_24px_-12px_rgba(14,165,233,0.1)]",
+        mobile ? "rounded-xl border border-white/40" : "border-r border-white/40"
       )}
     >
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 blueprint-grid opacity-55" />
-        <div className="absolute left-0 top-0 h-64 w-64 rounded-full bg-sky-200/40 blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-blue-200/30 blur-3xl" />
-      </div>
-
-      <div className="relative border-b border-sky-100/90 px-6 py-5">
+      <div className="relative border-b border-border px-6 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 shadow-lg shadow-sky-200/80">
-            <Sparkles className="h-5 w-5 text-white" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-foreground text-background">
+            <Sparkle className="h-5 w-5" weight="fill" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-slate-900">AI Screening</h1>
-            <p className="text-[11px] font-medium text-slate-500">Copilot Workspace</p>
+            <h1 className="text-lg font-bold tracking-tight text-foreground">AI Screening</h1>
+            <p className="text-[11px] font-medium text-muted-foreground">Copilot Workspace</p>
           </div>
         </div>
 
-        <div className="sky-card mt-4 rounded-2xl p-3">
-          <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-slate-500">
+        <div className="mt-6 rounded-xl border border-white/50 bg-white/40 p-4 shadow-sm">
+          <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
             <span>Runtime</span>
-            <span className={backendHealthy ? "text-emerald-600" : "text-amber-600"}>
+            <span className={backendHealthy ? "text-[#346538]" : "text-[#9F2F2D]"}>
               {backendHealthy ? "Live" : "Unknown"}
             </span>
           </div>
           <div className="mt-2 flex items-center gap-2">
-            <div className={`h-2 w-2 rounded-full ${backendHealthy ? "bg-emerald-500" : "bg-amber-500"}`} />
-            <p className="text-sm font-semibold text-slate-900">{providerLabel}</p>
+            <div className={`h-2 w-2 rounded-full ${backendHealthy ? "bg-[#346538]" : "bg-[#9F2F2D]"}`} />
+            <p className="text-sm font-semibold text-foreground">{providerLabel}</p>
           </div>
-          <p className="mt-1 text-[11px] text-slate-500">{aiStatus?.ai_model || "qwen2.5:7b"}</p>
+          <p className="mt-1 font-mono text-[11px] text-muted-foreground">{aiStatus?.ai_model || "qwen2.5:7b"}</p>
         </div>
       </div>
 
@@ -114,44 +107,45 @@ function SidebarPanel({
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-300",
                 isActive
-                  ? "bg-white text-slate-900 shadow-lg shadow-sky-100/90 ring-1 ring-sky-100"
-                  : "text-slate-600 hover:bg-white/70 hover:text-slate-900"
+                  ? "bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20"
+                  : "text-muted-foreground hover:bg-white/60 hover:text-foreground"
               )}
             >
               <item.icon
-                className={cn("h-[18px] w-[18px]", isActive ? "text-blue-600" : "text-slate-400")}
+                weight={isActive ? "fill" : "regular"}
+                className={cn("h-[18px] w-[18px]", isActive ? "text-foreground" : "text-muted-foreground")}
               />
               {item.label}
-              {isActive && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-500" />}
+              {isActive && <div className="ml-auto h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_rgba(14,165,233,0.8)]" />}
             </Link>
           );
         })}
         </div>
       </nav>
 
-      <div className="relative border-t border-sky-100/90 p-4">
-        <div className="sky-card rounded-2xl p-4">
-          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
+      <div className="relative border-t border-border p-4">
+        <div className="rounded-xl border border-white/50 bg-white/40 p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
             <ShieldCheck className="h-3.5 w-3.5" />
             AI Control
           </div>
-          <p className="mt-2 text-sm font-semibold text-slate-900">{providerLabel}</p>
-          <p className="text-[11px] text-slate-500">{aiStatus?.ai_model || "qwen2.5:7b"}</p>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-sky-100">
-            <div className={cn("h-full w-2/3 rounded-full bg-gradient-to-r", providerColor)} />
+          <p className="mt-2 text-sm font-semibold text-foreground">{providerLabel}</p>
+          <p className="font-mono text-[11px] text-muted-foreground">{aiStatus?.ai_model || "qwen2.5:7b"}</p>
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-border">
+            <div className={cn("h-full w-2/3 rounded-full bg-primary")} />
           </div>
-          <p className="mt-2 text-[10px] text-slate-500">
+          <p className="mt-2 text-[10px] text-muted-foreground">
             Current workspace status and provider mapping.
           </p>
           <Button
             variant="outline"
             size="sm"
             onClick={onLogout}
-            className="mt-3 h-9 w-full rounded-xl border-sky-100 bg-white/80 text-slate-600 hover:bg-sky-50"
+            className="mt-4 h-10 w-full rounded-full border-white/60 bg-white/50 text-muted-foreground hover:bg-white hover:text-foreground shadow-sm transition-all"
           >
-            <LogOut className="mr-2 h-3.5 w-3.5" />
+            <SignOut className="mr-2 h-4 w-4" />
             Sign out
           </Button>
         </div>
@@ -191,10 +185,10 @@ export function Sidebar() {
         <Button
           variant="outline"
           size="icon-lg"
-          className="h-11 w-11 rounded-2xl border-sky-100 bg-white/92 text-slate-700 shadow-lg shadow-sky-100/80 backdrop-blur"
+          className="h-11 w-11 rounded-lg border-border bg-background text-foreground shadow-sm"
           onClick={() => setMobileOpen(true)}
         >
-          <Menu className="h-5 w-5" />
+          <List className="h-5 w-5" />
           <span className="sr-only">Open navigation</span>
         </Button>
       </div>
@@ -205,7 +199,8 @@ export function Sidebar() {
 
       <Dialog open={mobileOpen} onOpenChange={setMobileOpen}>
         <DialogContent
-          className="left-4 top-4 h-[calc(100dvh-2rem)] w-[min(20rem,calc(100vw-2rem))] max-w-none -translate-x-0 -translate-y-0 overflow-hidden border border-sky-100 bg-transparent p-0 shadow-2xl shadow-sky-200/70"
+          className="left-4 top-4 h-[calc(100dvh-2rem)] w-[min(20rem,calc(100vw-2rem))] max-w-none -translate-x-0 -translate-y-0 overflow-hidden border border-border bg-transparent p-0"
+          showCloseButton={false}
         >
           <SidebarPanel
             pathname={pathname}

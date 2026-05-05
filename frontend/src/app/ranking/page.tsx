@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -21,41 +21,39 @@ import {
 import { api } from "@/lib/api";
 import type { JobDescription, Screening } from "@/types";
 import {
-  AlertTriangle,
-  BarChart3,
-  CheckCircle2,
-  Download,
+  Warning,
+  ChartBar,
+  CheckCircle,
+  DownloadSimple,
   Eye,
   Medal,
-  Sparkles,
+  Sparkle,
   Trophy,
   XCircle,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 
 function ScoreBadge({ score }: { score: number }) {
   if (score >= 75) {
-    return <Badge className="rounded-full border-0 bg-emerald-100 text-emerald-700">Strong</Badge>;
+    return <Badge className="badge-pale-green rounded-md border-0 uppercase font-mono text-[10px] shadow-sm">Strong</Badge>;
   }
   if (score >= 50) {
-    return <Badge className="rounded-full border-0 bg-amber-100 text-amber-700">Moderate</Badge>;
+    return <Badge className="badge-pale-yellow rounded-md border-0 uppercase font-mono text-[10px] shadow-sm">Moderate</Badge>;
   }
-  return <Badge className="rounded-full border-0 bg-rose-100 text-rose-700">Weak</Badge>;
+  return <Badge className="badge-pale-red rounded-md border-0 uppercase font-mono text-[10px] shadow-sm">Weak</Badge>;
 }
 
 function MiniBar({ score }: { score: number }) {
-  const color =
-    score >= 75
-      ? "from-emerald-400 to-cyan-400"
-      : score >= 50
-        ? "from-amber-400 to-orange-400"
-        : "from-rose-400 to-red-500";
-
   return (
-    <div className="flex items-center gap-2">
-      <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-        <div className={`h-full rounded-full bg-gradient-to-r ${color}`} style={{ width: `${score}%` }} />
+    <div className="flex items-center gap-3 mt-1">
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/50">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${score}%` }}
+          transition={{ type: "spring" as const, stiffness: 60, damping: 15, delay: 0.2 }}
+          className="h-full rounded-full bg-primary shadow-sm"
+        />
       </div>
-      <span className="w-8 text-right text-xs font-semibold text-slate-700">{score.toFixed(0)}</span>
+      <span className="w-8 text-right text-xs font-semibold text-foreground font-mono">{score.toFixed(0)}</span>
     </div>
   );
 }
@@ -100,42 +98,44 @@ export default function RankingPage() {
     ? `${selectedJob.title}${selectedJob.department ? ` - ${selectedJob.department}` : ""}`
     : undefined;
 
-  const getScoreColor = (score: number) =>
-    score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-rose-600";
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  };
 
-  const getMedalGradient = (index: number) => {
-    if (index === 0) return "from-amber-300 to-yellow-500";
-    if (index === 1) return "from-slate-300 to-slate-500";
-    if (index === 2) return "from-amber-500 to-orange-600";
-    return "from-sky-300 to-blue-500";
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 100, damping: 20 } },
   };
 
   return (
-    <div className="page-shell space-y-6 sm:space-y-8">
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-sky-100/90 bg-white/90 shadow-[0_18px_52px_rgba(96,165,250,0.14)] sm:rounded-[2.25rem]">
-        <div className="absolute inset-0 hero-mesh" />
-        <div className="absolute inset-0 blueprint-grid opacity-50" />
-        <div className="relative grid gap-6 p-4 sm:p-6 xl:grid-cols-[1.12fr_0.88fr] lg:p-8">
-          <div className="space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/90 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
-              <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+    <motion.div initial="hidden" animate="show" variants={containerVariants} className="page-shell space-y-12 sm:space-y-16">
+      <motion.section variants={itemVariants} className="glass-panel relative overflow-hidden">
+        <div className="absolute top-0 right-0 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative grid gap-10 xl:grid-cols-[1.12fr_0.88fr]">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-md bg-secondary px-2.5 py-1 text-[11px] uppercase tracking-widest text-muted-foreground font-mono">
+              <Sparkle className="h-3.5 w-3.5 text-foreground" weight="fill" />
               Ranking board
             </div>
 
             <div>
-              <h1 className="max-w-4xl text-2xl font-semibold text-slate-900 sm:text-3xl md:text-4xl">
+              <h1 className="max-w-4xl font-heading text-4xl tracking-tighter text-foreground sm:text-5xl md:text-6xl leading-[1.1]">
                 A cleaner ranking view for comparing candidates and spotting who should move forward first.
               </h1>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
+              <p className="mt-6 max-w-3xl text-base leading-relaxed text-muted-foreground">
                 The page is now arranged more like a decision board: pick the role, see the top performers, then review the full shortlist in cards that are easier to scan than a dense grid.
               </p>
             </div>
 
-            <div className="max-w-xl space-y-2">
-              <p className="text-sm font-medium text-slate-600">Select job description</p>
+            <div className="max-w-xl space-y-3">
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Select job description</p>
               <Select value={selectedJd} onValueChange={(value) => value && setSelectedJd(value)}>
-                <SelectTrigger className="h-12 w-full rounded-2xl border-sky-100 bg-white/90">
-                  <SelectValue placeholder="Choose a position..." className="min-w-0 truncate">
+                <SelectTrigger className="h-14 w-full rounded-xl border-white/50 bg-white/50 shadow-sm">
+                  <SelectValue placeholder="Choose a position..." className="min-w-0 truncate text-base">
                     {selectedJobLabel}
                   </SelectValue>
                 </SelectTrigger>
@@ -150,353 +150,424 @@ export default function RankingPage() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <Card className="sky-card rounded-[1.75rem] border-0">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Ranking volume</p>
-                    <p className="mt-2 text-4xl font-semibold text-slate-900">{selectedJd ? sortedScreenings.length : 0}</p>
-                  </div>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 shadow-lg shadow-sky-200">
-                    <Medal className="h-6 w-6 text-white" />
-                  </div>
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-white/50 bg-white/40 p-6 flex flex-col justify-between shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Ranking volume</p>
+                  <p className="mt-4 font-heading text-5xl font-semibold text-foreground">{selectedJd ? sortedScreenings.length : 0}</p>
                 </div>
-                <p className="mt-3 text-sm leading-7 text-slate-500">
-                  {selectedJob
-                    ? `Candidates already screened against ${selectedJob.title}.`
-                    : "Pick a job description first to activate the ranking board."}
-                </p>
-              </CardContent>
-            </Card>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+                  <Medal className="h-7 w-7" />
+                </div>
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                {selectedJob
+                  ? `Candidates already screened against ${selectedJob.title}.`
+                  : "Pick a job description first to activate the ranking board."}
+              </p>
+            </div>
 
-            <Card className="soft-panel rounded-[1.75rem] border-0">
-              <CardContent className="p-4 sm:p-6">
-                <p className="text-sm font-semibold text-slate-900">Decision posture</p>
-                <div className="mt-4 space-y-3">
-                  <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Role</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
-                      {selectedJob?.title || "No role selected"}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Best candidate score</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
-                      {sortedScreenings[0] ? sortedScreenings[0].overall_score.toFixed(0) : "No result yet"}
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    disabled={!selectedJd || sortedScreenings.length === 0}
-                    className="h-12 w-full rounded-2xl border-sky-100 bg-white/88"
-                    onClick={() => api.exportExcel(selectedJd)}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Export Excel
-                  </Button>
+            <div className="rounded-2xl border border-white/50 bg-white/40 p-6 shadow-sm">
+              <p className="font-heading text-xl font-semibold text-foreground">Decision posture</p>
+              <div className="mt-5 space-y-4">
+                <div className="rounded-xl border border-white/50 bg-white/50 px-5 py-4 shadow-sm">
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Role</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">
+                    {selectedJob?.title || "No role selected"}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="rounded-xl border border-white/50 bg-white/50 px-5 py-4 shadow-sm">
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Best candidate score</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">
+                    {sortedScreenings[0] ? sortedScreenings[0].overall_score.toFixed(0) : "No result yet"}
+                  </p>
+                </div>
+                <button
+                  disabled={!selectedJd || sortedScreenings.length === 0}
+                  className="premium-button w-full flex h-12 items-center justify-center px-4 text-sm font-medium mt-4"
+                  onClick={() => api.exportExcel(selectedJd)}
+                >
+                  <DownloadSimple className="mr-2 h-4 w-4" />
+                  Export Excel
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {!selectedJd ? (
-        <Card className="border-0 shadow-md">
-          <CardContent className="py-16 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
-              <BarChart3 className="h-7 w-7 text-slate-300" />
-            </div>
-            <p className="text-slate-500">Select a job description to activate the ranking board.</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants} className="glass-panel py-24 text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/50 shadow-sm border border-white/60">
+            <ChartBar className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground">Select a job description to activate the ranking board.</p>
+        </motion.div>
       ) : sortedScreenings.length === 0 ? (
-        <Card className="border-0 shadow-md">
-          <CardContent className="py-16 text-center">
-            <p className="text-slate-500">No screening results yet. Screen candidates first, then return here.</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants} className="glass-panel py-24 text-center">
+          <p className="text-muted-foreground">No screening results yet. Screen candidates first, then return here.</p>
+        </motion.div>
       ) : (
-        <>
-          <div className="grid gap-5 lg:grid-cols-3">
-            {sortedScreenings.slice(0, 3).map((screening, index) => (
-              <Card
-                key={screening.id}
-                className={`sky-card rounded-[1.85rem] border-0 ${index === 0 ? "shadow-[0_18px_48px_rgba(250,204,21,0.24)]" : ""}`}
+        <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-12 sm:space-y-16">
+          <div className="flex flex-col gap-6 xl:flex-row xl:items-stretch">
+            <AnimatePresence>
+            {/* RANK 1 - THE STAR */}
+            {sortedScreenings[0] && (
+              <motion.div
+                layout
+                layoutId={`top-${sortedScreenings[0].id}`}
+                variants={itemVariants}
+                key={sortedScreenings[0].id}
+                className="glass-panel relative flex-1 ring-2 ring-primary/30 bg-primary/5 shadow-xl overflow-hidden group p-8 sm:p-10"
               >
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${getMedalGradient(index)} text-sm font-bold text-white shadow-lg`}>
-                      {index + 1}
+                <motion.div 
+                  className="absolute inset-0 bg-primary/5 blur-3xl rounded-full"
+                  animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                />
+                
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                  <div>
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl font-bold font-mono shadow-sm bg-primary text-primary-foreground">
+                        1
+                      </div>
+                      <Trophy className="h-8 w-8 text-primary drop-shadow-sm" weight="fill" />
                     </div>
-                    <Trophy className={`h-5 w-5 ${index === 0 ? "text-amber-500" : index === 1 ? "text-slate-400" : "text-orange-500"}`} />
-                  </div>
 
-                  <div className="mt-5">
-                    <p className="text-lg font-semibold text-slate-900">{screening.candidate?.name || "Candidate"}</p>
-                    <p className="truncate text-sm text-slate-500">{screening.candidate?.email || "No email detected"}</p>
-                  </div>
+                    <div className="mt-8">
+                      <p className="font-heading text-3xl font-semibold text-foreground">{sortedScreenings[0].candidate?.name || "Candidate"}</p>
+                      <p className="text-base text-muted-foreground mt-1">{sortedScreenings[0].candidate?.email || "No email detected"}</p>
+                    </div>
 
-                  <div className="mt-5 rounded-[1.5rem] border border-sky-100 bg-white/88 p-4">
-                    <p className={`text-4xl font-semibold ${getScoreColor(screening.overall_score)}`}>
-                      {screening.overall_score.toFixed(0)}
-                    </p>
-                    <div className="mt-2">
-                      <ScoreBadge score={screening.overall_score} />
+                    <div className="mt-8 rounded-3xl border border-primary/20 bg-white/60 p-8 flex flex-col items-start gap-3 shadow-sm backdrop-blur-md">
+                      <p className="text-[11px] uppercase tracking-widest text-primary font-mono font-bold">Overall AI Match</p>
+                      <p className="font-heading text-7xl font-bold text-foreground tracking-tighter">
+                        {sortedScreenings[0].overall_score.toFixed(0)}
+                      </p>
+                      <ScoreBadge score={sortedScreenings[0].overall_score} />
                     </div>
                   </div>
 
-                  <div className="mt-5 space-y-3">
+                  <div className="mt-10 grid grid-cols-2 gap-x-8 gap-y-6">
                     {[
-                      { label: "Skills", score: screening.skills_score },
-                      { label: "Experience", score: screening.experience_score },
-                      { label: "Education", score: screening.education_score },
-                      { label: "Certifications", score: screening.certification_score },
+                      { label: "Skills", score: sortedScreenings[0].skills_score },
+                      { label: "Experience", score: sortedScreenings[0].experience_score },
+                      { label: "Education", score: sortedScreenings[0].education_score },
+                      { label: "Certifications", score: sortedScreenings[0].certification_score },
                     ].map((item) => (
-                      <div key={item.label} className="space-y-1">
-                        <div className="flex items-center justify-between text-xs text-slate-500">
+                      <div key={item.label} className="space-y-2">
+                        <div className="flex items-center justify-between text-[11px] uppercase tracking-widest text-muted-foreground font-mono">
                           <span>{item.label}</span>
-                          <span>{item.score.toFixed(0)}</span>
                         </div>
                         <MiniBar score={item.score} />
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+              </motion.div>
+            )}
 
-          <div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h2 className="text-2xl font-semibold text-slate-900">Full shortlist</h2>
-                <p className="text-sm text-slate-500">
-                  Read each candidate card top to bottom: score first, dimension breakdown second, reasons last.
-                </p>
-              </div>
-              <Badge className="rounded-full border-0 bg-sky-50 px-3 py-1.5 text-sky-700">
-                {sortedScreenings.length} candidate{sortedScreenings.length === 1 ? "" : "s"}
-              </Badge>
-            </div>
-
-            <div className="space-y-4">
-              {sortedScreenings.map((screening, index) => (
-                <Card key={screening.id} className="soft-panel rounded-[1.85rem] border-0">
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <Badge className="rounded-full border-0 bg-slate-900 text-white">Rank #{index + 1}</Badge>
-                          <p className="text-xl font-semibold text-slate-900">
-                            {screening.candidate?.name || "Candidate"}
-                          </p>
-                          <p className="text-sm text-slate-500">{screening.candidate?.email || "No email detected"}</p>
+            {/* RANK 2 & 3 */}
+            {(sortedScreenings[1] || sortedScreenings[2]) && (
+              <div className="flex-1 flex flex-col gap-6">
+                {[sortedScreenings[1], sortedScreenings[2]].filter(Boolean).map((screening, index) => (
+                  <motion.div
+                    layout
+                    layoutId={`top-${screening.id}`}
+                    variants={itemVariants}
+                    key={screening.id}
+                    className="glass-panel flex-1 flex flex-col sm:flex-row gap-8 sm:items-center p-6 sm:p-8"
+                  >
+                    <div className="flex flex-col sm:w-[40%] min-w-0">
+                      <div className="flex items-center justify-between gap-4 mb-5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-bold font-mono shadow-sm bg-white/80 text-foreground border border-white/60">
+                          {index + 2}
                         </div>
-
-                        <p className="mt-4 rounded-[1.5rem] border border-sky-100 bg-white/88 px-4 py-4 text-sm leading-7 text-slate-600">
-                          {screening.ai_analysis.summary || "No summary stored for this result."}
-                        </p>
+                        <Medal className="h-6 w-6 text-muted-foreground" />
                       </div>
-
-                      <div className="w-full rounded-[1.5rem] border border-sky-100 bg-white/90 px-5 py-4 shadow-sm sm:w-auto">
-                        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Overall score</p>
-                        <p className={`mt-2 text-4xl font-semibold ${getScoreColor(screening.overall_score)}`}>
+                      <p className="font-heading text-xl font-semibold text-foreground truncate">{screening.candidate?.name || "Candidate"}</p>
+                      <p className="truncate text-xs text-muted-foreground mt-1">{screening.candidate?.email || "No email detected"}</p>
+                      
+                      <div className="mt-5 flex items-end gap-3">
+                        <p className="font-heading text-4xl font-bold text-foreground tracking-tighter leading-none">
                           {screening.overall_score.toFixed(0)}
                         </p>
-                        <div className="mt-2">
-                          <ScoreBadge score={screening.overall_score} />
-                        </div>
+                        <div className="mb-1"><ScoreBadge score={screening.overall_score} /></div>
                       </div>
                     </div>
 
-                    <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="sm:w-[60%] grid grid-cols-2 gap-x-6 gap-y-5">
                       {[
                         { label: "Skills", score: screening.skills_score },
                         { label: "Experience", score: screening.experience_score },
                         { label: "Education", score: screening.education_score },
-                        { label: "Certifications", score: screening.certification_score },
+                        { label: "Certs", score: screening.certification_score },
                       ].map((item) => (
-                        <div key={item.label} className="rounded-[1.4rem] border border-sky-100 bg-white/88 p-4">
-                          <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
-                          <p className={`mt-2 text-2xl font-semibold ${getScoreColor(item.score)}`}>
-                            {item.score.toFixed(0)}
-                          </p>
-                          <div className="mt-3">
-                            <MiniBar score={item.score} />
+                        <div key={item.label} className="space-y-1.5">
+                          <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
+                            <span>{item.label}</span>
                           </div>
+                          <MiniBar score={item.score} />
                         </div>
                       ))}
                     </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+            </AnimatePresence>
+          </div>
 
-                    <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_1fr_auto]">
-                      <div className="rounded-[1.5rem] border border-sky-100 bg-white/88 p-4">
-                        <p className="text-sm font-semibold text-slate-900">Matched skills</p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {screening.matched_skills?.length > 0 ? (
-                            screening.matched_skills.slice(0, 5).map((skill, skillIndex) => (
-                              <Badge key={`${screening.id}-matched-${skillIndex}`} className="rounded-full border-0 bg-emerald-50 text-emerald-700">
-                                {skill}
-                              </Badge>
-                            ))
-                          ) : (
-                            <p className="text-sm text-slate-500">No matched skills stored.</p>
-                          )}
+          <motion.div variants={itemVariants}>
+            <div className="flex flex-col gap-4 border-b border-white/40 pb-6 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="font-heading text-3xl font-semibold text-foreground">Full shortlist</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Read each candidate card top to bottom: score first, dimension breakdown second, reasons last.
+                </p>
+              </div>
+              <Badge className="badge-pale-blue rounded-md border-0 font-mono">
+                {sortedScreenings.length} candidate{sortedScreenings.length === 1 ? "" : "s"}
+              </Badge>
+            </div>
+
+            <div className="mt-8 grid gap-6">
+              <AnimatePresence>
+              {sortedScreenings.map((screening, index) => (
+                <motion.div 
+                  layout 
+                  layoutId={`list-${screening.id}`} 
+                  variants={itemVariants} 
+                  key={screening.id} 
+                  className="rounded-[2rem] border border-white/60 bg-white/70 p-6 sm:p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:scale-[1.01] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-300 ease-out flex flex-col gap-8 xl:flex-row xl:items-center justify-between"
+                >
+                  <div className="flex items-start gap-6 min-w-0 xl:w-[40%]">
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white border border-slate-100 font-mono text-2xl font-bold text-foreground shadow-sm">
+                      {index + 1}
+                    </div>
+                    <div className="min-w-0 pt-1">
+                      <p className="truncate font-heading text-2xl font-bold text-foreground tracking-tight">{screening.candidate?.name || "Candidate"}</p>
+                      <p className="truncate text-sm text-muted-foreground mt-1">{screening.candidate?.email || "No email detected"}</p>
+                      {screening.ai_analysis?.summary && (
+                        <p className="mt-4 text-sm leading-relaxed text-slate-500 line-clamp-2">
+                          {screening.ai_analysis.summary}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-8 xl:w-[60%] border-t border-slate-100/50 xl:border-t-0 xl:border-l xl:pl-8 pt-6 xl:pt-0">
+                    <div className="w-full sm:w-auto flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                      {[
+                        { label: "Skills", score: screening.skills_score },
+                        { label: "Experience", score: screening.experience_score },
+                        { label: "Education", score: screening.education_score },
+                        { label: "Certs", score: screening.certification_score },
+                      ].map((item) => (
+                        <div key={item.label} className="flex flex-col">
+                          <span className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground mb-2">{item.label}</span>
+                          <MiniBar score={item.score} />
                         </div>
+                      ))}
+                    </div>
+                    
+                    <div className="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-6 sm:pl-6 sm:border-l sm:border-slate-100/50">
+                      <div className="text-left sm:text-right flex flex-row sm:flex-col items-center sm:items-end gap-3 sm:gap-1">
+                        <p className="font-heading text-5xl font-bold tracking-tighter text-foreground leading-none">{screening.overall_score.toFixed(0)}</p>
+                        <ScoreBadge score={screening.overall_score} />
                       </div>
-
-                      <div className="rounded-[1.5rem] border border-sky-100 bg-white/88 p-4">
-                        <p className="text-sm font-semibold text-slate-900">Missing skills</p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {screening.missing_skills?.length > 0 ? (
-                            screening.missing_skills.slice(0, 5).map((skill, skillIndex) => (
-                              <Badge key={`${screening.id}-missing-${skillIndex}`} className="rounded-full border-0 bg-slate-100 text-slate-700">
-                                {skill}
-                              </Badge>
-                            ))
-                          ) : (
-                            <p className="text-sm text-slate-500">No missing skills stored.</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2 sm:flex-row xl:flex-col xl:justify-start">
-                        <Button
-                          variant="outline"
-                          className="h-11 rounded-2xl border-sky-100 bg-white/88"
+                      
+                      <div className="flex flex-col gap-2">
+                        <button
+                          className="flex h-10 w-10 items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-primary hover:text-white hover:border-primary transition-colors shadow-sm"
                           onClick={() => setSelectedScreening(screening)}
+                          aria-label="View Details"
                         >
-                          <Eye className="mr-2 h-4 w-4" />
-                          Details
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="h-11 rounded-2xl border-sky-100 bg-white/88"
+                          <Eye className="h-4 w-4" weight="bold" />
+                        </button>
+                        <button
+                          className="flex h-10 w-10 items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 transition-colors shadow-sm"
                           onClick={() => api.exportPdf(screening.id)}
+                          aria-label="Export PDF"
                         >
-                          <Download className="mr-2 h-4 w-4" />
-                          Export PDF
-                        </Button>
+                          <DownloadSimple className="h-4 w-4" weight="bold" />
+                        </button>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </motion.div>
               ))}
+              </AnimatePresence>
             </div>
-          </div>
-        </>
+          </motion.div>
+        </motion.div>
       )}
 
       <Dialog open={!!selectedScreening} onOpenChange={() => setSelectedScreening(null)}>
-        <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto rounded-[1.75rem] border border-sky-100 bg-white p-0 sm:max-h-[88vh] sm:max-w-3xl">
-          <DialogHeader className="border-b border-sky-100 bg-sky-50/60 px-4 py-4 sm:px-6 sm:py-5">
-            <DialogTitle className="flex items-center gap-3 text-slate-900">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 text-sm font-bold text-white">
-                {selectedScreening?.candidate?.name?.charAt(0)?.toUpperCase() || "?"}
+        <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto rounded-[2.5rem] border border-white/80 bg-[#f9fafb] p-0 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] sm:max-h-[90vh] sm:max-w-4xl lg:max-w-5xl">
+          <DialogTitle className="sr-only">Candidate Profile Details</DialogTitle>
+          {selectedScreening && (
+            <div className="flex flex-col">
+              {/* HERO SECTION */}
+              <div className="relative bg-white border-b border-slate-100 p-8 sm:p-12 overflow-hidden">
+                <div className="absolute top-0 right-0 h-full w-1/2 bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+                  <div className="flex items-center gap-6">
+                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-heading text-4xl font-bold border-4 border-white shadow-sm">
+                      {selectedScreening.candidate?.name?.charAt(0)?.toUpperCase() || "?"}
+                    </div>
+                    <div>
+                      <h2 className="font-heading text-4xl sm:text-5xl font-bold tracking-tight text-slate-900">
+                        {selectedScreening.candidate?.name || "Candidate Profile"}
+                      </h2>
+                      <p className="mt-2 text-base text-slate-500 font-medium">
+                        {selectedScreening.candidate?.email || "No contact info available"}
+                      </p>
+                      <div className="mt-4">
+                        <ScoreBadge score={selectedScreening.overall_score} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-left md:text-right rounded-3xl bg-slate-50 border border-slate-100 p-6 flex items-center gap-6 shadow-inner">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-widest text-slate-400 font-mono font-semibold mb-1">AI Match Score</p>
+                      <p className="font-heading text-6xl font-bold tracking-tighter text-primary leading-none">
+                        {selectedScreening.overall_score.toFixed(0)}<span className="text-3xl text-primary/50">/100</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              {selectedScreening?.candidate?.name || "Candidate analysis"}
-            </DialogTitle>
-          </DialogHeader>
 
-          {selectedScreening ? (
-            <div className="space-y-5 p-4 sm:p-6">
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-                {[
-                  { label: "Overall", score: selectedScreening.overall_score },
-                  { label: "Skills", score: selectedScreening.skills_score },
-                  { label: "Experience", score: selectedScreening.experience_score },
-                  { label: "Education", score: selectedScreening.education_score },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-[1.4rem] border border-sky-100 bg-sky-50/70 p-4 text-center">
-                    <p className={`text-2xl font-semibold ${getScoreColor(item.score)}`}>{item.score.toFixed(0)}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
+              {/* BENTO GRID */}
+              <div className="p-8 sm:p-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {/* Analytics Row */}
+                <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {[
+                    { label: "Skills", score: selectedScreening.skills_score, icon: <Sparkle className="h-5 w-5" /> },
+                    { label: "Experience", score: selectedScreening.experience_score, icon: <Medal className="h-5 w-5" /> },
+                    { label: "Education", score: selectedScreening.education_score, icon: <CheckCircle className="h-5 w-5" /> },
+                    { label: "Certifications", score: selectedScreening.certification_score, icon: <Trophy className="h-5 w-5" /> },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-3xl bg-white border border-slate-200/50 p-6 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 text-slate-400 mb-4">
+                        {item.icon}
+                        <p className="text-[11px] uppercase tracking-widest font-mono font-medium">{item.label}</p>
+                      </div>
+                      <p className="font-heading text-4xl font-bold text-slate-900 mb-3">{item.score.toFixed(0)}</p>
+                      <MiniBar score={item.score} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Skills Analysis */}
+                <div className="rounded-3xl bg-white border border-slate-200/50 p-8 shadow-sm lg:col-span-2">
+                  <h3 className="font-heading text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <ChartBar className="h-5 w-5 text-indigo-500" />
+                    Skill Assessment
+                  </h3>
+                  
+                  <div className="space-y-8">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-emerald-500" weight="fill" /> 
+                        Verified Matches
+                      </p>
+                      {selectedScreening.matched_skills?.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {selectedScreening.matched_skills.map((skill, index) => (
+                            <div key={index} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm font-medium">
+                              <CheckCircle className="h-3.5 w-3.5" />
+                              {skill}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-400">No verified skills found.</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                        <XCircle className="h-4 w-4 text-rose-500" weight="fill" /> 
+                        Missing Requirements
+                      </p>
+                      {selectedScreening.missing_skills?.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {selectedScreening.missing_skills.map((skill, index) => (
+                            <div key={index} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-100 text-rose-700 text-sm font-medium">
+                              <XCircle className="h-3.5 w-3.5" />
+                              {skill}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-400">Candidate meets all listed skill requirements.</p>
+                      )}
+                    </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Qualitative Highlights */}
+                <div className="space-y-6 lg:col-span-1 flex flex-col">
+                  {selectedScreening.strengths?.length > 0 && (
+                    <div className="rounded-3xl bg-indigo-50/50 border border-indigo-100 p-6 flex-1 shadow-sm">
+                      <h3 className="font-heading text-lg font-bold text-indigo-900 mb-4 flex items-center gap-2">
+                        <Sparkle className="h-5 w-5 text-indigo-500" weight="fill" />
+                        Key Strengths
+                      </h3>
+                      <ul className="space-y-3">
+                        {selectedScreening.strengths.map((item, index) => (
+                          <li key={index} className="flex gap-3 text-sm leading-relaxed text-indigo-800/80">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {selectedScreening.weaknesses?.length > 0 && (
+                    <div className="rounded-3xl bg-amber-50/50 border border-amber-100 p-6 flex-1 shadow-sm">
+                      <h3 className="font-heading text-lg font-bold text-amber-900 mb-4 flex items-center gap-2">
+                        <Warning className="h-5 w-5 text-amber-500" weight="fill" />
+                        Areas of Concern
+                      </h3>
+                      <ul className="space-y-3">
+                        {selectedScreening.weaknesses.map((item, index) => (
+                          <li key={index} className="flex gap-3 text-sm leading-relaxed text-amber-800/80">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {selectedScreening.red_flags?.length > 0 && (
+                    <div className="rounded-3xl bg-rose-50 border border-rose-200 p-6 shadow-sm">
+                      <h3 className="font-heading text-lg font-bold text-rose-900 mb-4 flex items-center gap-2">
+                        <Warning className="h-5 w-5 text-rose-600" weight="duotone" />
+                        Critical Red Flags
+                      </h3>
+                      <ul className="space-y-3">
+                        {selectedScreening.red_flags.map((item, index) => (
+                          <li key={index} className="flex gap-3 text-sm font-medium leading-relaxed text-rose-800">
+                            <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
-
-              <Separator />
-
-              {selectedScreening.matched_skills?.length > 0 ? (
-                <div>
-                  <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-emerald-700">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Matched skills
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedScreening.matched_skills.map((skill, index) => (
-                      <Badge key={`${skill}-${index}`} className="rounded-full border-0 bg-emerald-50 text-emerald-700">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              {selectedScreening.missing_skills?.length > 0 ? (
-                <div>
-                  <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-rose-700">
-                    <XCircle className="h-4 w-4" />
-                    Missing skills
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedScreening.missing_skills.map((skill, index) => (
-                      <Badge key={`${skill}-${index}`} className="rounded-full border-0 bg-rose-50 text-rose-700">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-
-              {selectedScreening.strengths?.length > 0 ? (
-                <div>
-                  <p className="mb-2 text-sm font-semibold text-slate-900">Strengths</p>
-                  <ul className="space-y-2">
-                    {selectedScreening.strengths.map((item, index) => (
-                      <li key={`${item}-${index}`} className="flex gap-2 text-sm text-slate-600">
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              {selectedScreening.weaknesses?.length > 0 ? (
-                <div>
-                  <p className="mb-2 text-sm font-semibold text-slate-900">Weaknesses</p>
-                  <ul className="space-y-2">
-                    {selectedScreening.weaknesses.map((item, index) => (
-                      <li key={`${item}-${index}`} className="flex gap-2 text-sm text-slate-600">
-                        <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              {selectedScreening.red_flags?.length > 0 ? (
-                <div>
-                  <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-rose-700">
-                    <AlertTriangle className="h-4 w-4" />
-                    Red flags
-                  </p>
-                  <ul className="space-y-2">
-                    {selectedScreening.red_flags.map((item, index) => (
-                      <li key={`${item}-${index}`} className="flex gap-2 text-sm text-slate-600">
-                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
             </div>
-          ) : null}
+          )}
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }

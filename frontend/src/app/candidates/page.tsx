@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import type { DragEvent } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -18,14 +18,14 @@ import type { Candidate } from "@/types";
 import {
   Eye,
   FileText,
-  FileUp,
-  Mail,
+  FileArrowUp,
+  Envelope,
   Phone,
-  Sparkles,
-  Trash2,
+  Sparkle,
+  Trash,
   Upload,
   UserCircle,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 
 function formatUploadedDate(value?: string) {
   if (!value) return "N/A";
@@ -147,23 +147,37 @@ export default function CandidatesPage() {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 100, damping: 20 } },
+  };
+
   return (
-    <div className="page-shell space-y-6 sm:space-y-8">
-      <section className="relative overflow-hidden rounded-[1.5rem] border border-sky-100/90 bg-white/90 shadow-[0_18px_52px_rgba(96,165,250,0.14)] sm:rounded-[2.25rem]">
-        <div className="absolute inset-0 hero-mesh" />
-        <div className="absolute inset-0 blueprint-grid opacity-50" />
-        <div className="relative grid gap-6 p-4 sm:p-6 xl:grid-cols-[1.18fr_0.82fr] lg:p-8">
-          <div className="space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-white/90 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
-              <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+    <motion.div initial="hidden" animate="show" variants={containerVariants} className="page-shell space-y-12 sm:space-y-16">
+      <motion.section variants={itemVariants} className="glass-panel relative overflow-hidden">
+        {/* Subtle decorative glow */}
+        <div className="absolute top-0 right-0 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+
+        <div className="relative grid gap-10 xl:grid-cols-[1.18fr_0.82fr]">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-md bg-secondary px-2.5 py-1 text-[11px] uppercase tracking-widest text-muted-foreground font-mono">
+              <Sparkle className="h-3.5 w-3.5 text-foreground" weight="fill" />
               Candidate inbox
             </div>
 
             <div>
-              <h1 className="max-w-4xl text-2xl font-semibold text-slate-900 sm:text-3xl md:text-4xl">
+              <h1 className="max-w-4xl font-heading text-4xl tracking-tighter text-foreground sm:text-5xl md:text-6xl leading-[1.1]">
                 A lighter inbox for collecting CVs, checking parse quality, and keeping inbound talent organized.
               </h1>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
+              <p className="mt-6 max-w-3xl text-base leading-relaxed text-muted-foreground">
                 The visual structure is simpler now: one upload zone, clear volume stats, and candidate cards that are easier to scan than a dense table.
               </p>
             </div>
@@ -173,38 +187,38 @@ export default function CandidatesPage() {
               onDragLeave={handleDragState(false)}
               onDragOver={handleDragState(true)}
               onDrop={handleDrop}
-              className={`rounded-[1.85rem] border-2 border-dashed p-5 sm:p-7 transition-all duration-300 ${
+              className={`rounded-[2.5rem] border-2 border-dashed p-10 transition-all duration-300 backdrop-blur-xl ${
                 dragActive
-                  ? "border-sky-400 bg-sky-50/80 shadow-lg shadow-sky-100"
-                  : "border-sky-100 bg-white/86"
+                  ? "border-primary bg-primary/10 shadow-[0_0_40px_rgba(14,165,233,0.3)] scale-[1.02]"
+                  : "border-white/60 bg-white/50 hover:bg-white/70 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]"
               }`}
             >
-              <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-                <div className="space-y-3">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 shadow-lg shadow-sky-200">
-                    <FileUp className="h-7 w-7 text-white" />
+              <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+                <div className="space-y-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-sky-500/20">
+                    <FileArrowUp className="h-7 w-7" />
                   </div>
                   <div>
-                    <p className="text-lg font-semibold text-slate-900">Upload candidate CVs</p>
-                    <p className="mt-2 text-sm leading-7 text-slate-500">
+                    <p className="font-heading text-xl font-semibold text-foreground">Upload candidate CVs</p>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                       Drag PDF or DOCX files here, or browse manually. The parser will store raw text so the screening engine can reuse it later.
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-sky-100 bg-white/92 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Profiles</p>
-                      <p className="mt-2 text-2xl font-semibold text-slate-900">{loading ? 0 : candidates.length}</p>
+                <div className="space-y-5">
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="rounded-xl border border-white/50 bg-white/50 p-5 shadow-sm">
+                      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Profiles</p>
+                      <p className="mt-2 font-heading text-3xl font-semibold text-foreground">{loading ? 0 : candidates.length}</p>
                     </div>
-                    <div className="rounded-2xl border border-sky-100 bg-white/92 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Formats</p>
-                      <p className="mt-2 text-2xl font-semibold text-slate-900">PDF</p>
+                    <div className="rounded-xl border border-white/50 bg-white/50 p-5 shadow-sm">
+                      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Formats</p>
+                      <p className="mt-2 font-heading text-3xl font-semibold text-foreground">PDF</p>
                     </div>
-                    <div className="rounded-2xl border border-sky-100 bg-white/92 p-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Fallback</p>
-                      <p className="mt-2 text-2xl font-semibold text-slate-900">DOCX</p>
+                    <div className="rounded-xl border border-white/50 bg-white/50 p-5 shadow-sm">
+                      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Fallback</p>
+                      <p className="mt-2 font-heading text-3xl font-semibold text-foreground">DOCX</p>
                     </div>
                   </div>
 
@@ -218,16 +232,16 @@ export default function CandidatesPage() {
                         className="hidden"
                         onChange={(event) => event.target.files && handleUpload(event.target.files)}
                       />
-                      <Button
+                      <button
                         disabled={uploading}
-                        className="h-12 w-full rounded-2xl gradient-blue border-0 px-5 text-white shadow-lg shadow-sky-200 sm:w-auto"
+                        className="premium-button flex h-12 w-full items-center justify-center px-8 text-sm font-medium sm:w-auto"
                         onClick={() => document.getElementById("cv-upload")?.click()}
                       >
                         <Upload className="mr-2 h-4 w-4" />
                         {uploading ? "Uploading..." : "Select files"}
-                      </Button>
+                      </button>
                     </label>
-                    <div className="inline-flex w-full items-center rounded-2xl border border-sky-100 bg-white/88 px-4 py-3 text-sm text-slate-500 sm:w-auto">
+                    <div className="inline-flex w-full items-center rounded-xl border border-white/50 bg-white/40 px-5 py-3 text-sm text-muted-foreground shadow-sm sm:w-auto">
                       Supports PDF and DOCX. Use cleaner CVs for better parsing quality.
                     </div>
                   </div>
@@ -236,219 +250,215 @@ export default function CandidatesPage() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <Card className="sky-card rounded-[1.75rem] border-0">
-              <CardContent className="p-4 sm:p-6">
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Inbox posture</p>
-                <p className="mt-2 text-4xl font-semibold text-slate-900">{loading ? 0 : candidates.length}</p>
-                <p className="mt-2 text-sm leading-7 text-slate-500">
-                  Candidate profiles already stored and ready for selection in the screening workspace.
-                </p>
-              </CardContent>
-            </Card>
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-white/50 bg-white/40 p-8 shadow-sm backdrop-blur-xl">
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Inbox posture</p>
+              <p className="mt-4 font-heading text-6xl font-semibold text-foreground">{loading ? 0 : candidates.length}</p>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                Candidate profiles already stored and ready for selection in the screening workspace.
+              </p>
+            </div>
 
-            <Card className="soft-panel rounded-[1.75rem] border-0">
-              <CardContent className="p-4 sm:p-6">
-                <p className="text-sm font-semibold text-slate-900">Upload guidance</p>
-                <div className="mt-4 space-y-3">
-                  {[
-                    "Use one CV file per candidate to keep profiles clean.",
-                    "Prefer PDFs with selectable text for stronger parsing output.",
-                    "Open the parsed preview after upload if the profile looks incomplete.",
-                  ].map((item) => (
-                    <div key={item} className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3 text-sm text-slate-600">
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="rounded-2xl border border-white/50 bg-white/40 p-8 shadow-sm backdrop-blur-xl">
+              <p className="font-heading text-xl font-semibold text-foreground">Upload guidance</p>
+              <div className="mt-5 space-y-3">
+                {[
+                  "Use one CV file per candidate to keep profiles clean.",
+                  "Prefer PDFs with selectable text for stronger parsing output.",
+                  "Open the parsed preview after upload if the profile looks incomplete.",
+                ].map((item) => (
+                  <div key={item} className="rounded-xl border border-white/60 bg-white/50 px-5 py-4 text-sm text-foreground shadow-sm hover:bg-white transition-all">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {loading ? (
-        <div className="py-16 text-center text-slate-400">Loading candidates...</div>
+        <div className="py-24 text-center text-muted-foreground font-mono text-sm">Loading candidates...</div>
       ) : candidates.length === 0 ? (
-        <Card className="border-0 shadow-md">
-          <CardContent className="py-16 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
-              <UserCircle className="h-7 w-7 text-slate-300" />
-            </div>
-            <p className="text-slate-500">No candidates yet. Upload CVs to start building the pipeline.</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants} className="glass-panel py-24 text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/50 shadow-sm border border-white/60">
+            <UserCircle className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground">No candidates yet. Upload CVs to start building the pipeline.</p>
+        </motion.div>
       ) : (
-        <div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <motion.div variants={containerVariants} initial="hidden" animate="show">
+          <div className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-slate-900">Candidate list</h2>
-              <p className="text-sm text-slate-500">Tap into each profile to inspect the parsed CV content before screening.</p>
+              <h2 className="font-heading text-3xl font-semibold text-foreground">Candidate list</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Tap into each profile to inspect the parsed CV content before screening.</p>
             </div>
-            <Badge className="rounded-full border-0 bg-sky-50 px-3 py-1.5 text-sky-700">
+            <Badge className="badge-pale-blue rounded-md border-0 font-mono">
               {candidates.length} total
             </Badge>
           </div>
 
-          <div className="mt-4 grid gap-5 xl:grid-cols-2">
-            {candidates.map((candidate) => (
-              <Card key={candidate.id} className="soft-panel rounded-[1.75rem] border-0">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex min-w-0 items-center gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 text-sm font-bold text-white shadow-lg shadow-sky-200">
+          <div className="mt-8 grid gap-6 xl:grid-cols-2">
+            <AnimatePresence>
+              {candidates.map((candidate) => (
+                <motion.div layout layoutId={`candidate-${candidate.id}`} variants={itemVariants} key={candidate.id} className="rounded-[2rem] border border-white/60 bg-white/70 p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:scale-[1.02] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-300 ease-out group">
+                  <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-5">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground shadow-md transition-transform group-hover:scale-110">
                         {candidate.name?.charAt(0)?.toUpperCase() || "?"}
                       </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-lg font-semibold text-slate-900">
-                          {candidate.name || "Unnamed candidate"}
-                        </p>
-                        <p className="truncate text-sm text-slate-500">{candidate.email || "No email detected"}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-1 self-end sm:self-auto">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openCandidateDetails(candidate)}
-                        className="h-9 w-9 rounded-xl p-0 hover:bg-sky-100 hover:text-blue-600"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(candidate.id)}
-                        className="h-9 w-9 rounded-xl p-0 hover:bg-rose-50 hover:text-rose-600"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
-                      <p className="text-xs text-slate-400">Email</p>
-                      <p className="mt-1 truncate text-sm font-medium text-slate-700">{candidate.email || "N/A"}</p>
-                    </div>
-                    <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
-                      <p className="text-xs text-slate-400">Phone</p>
-                      <p className="mt-1 truncate text-sm font-medium text-slate-700">{candidate.phone || "N/A"}</p>
-                    </div>
-                    <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
-                      <p className="text-xs text-slate-400">Uploaded</p>
-                      <p className="mt-1 text-sm font-medium text-slate-700">
-                        {formatUploadedDate(candidate.uploaded_at)}
+                    <div className="min-w-0">
+                      <p className="truncate font-heading text-xl font-semibold text-foreground">
+                        {candidate.name || "Unnamed candidate"}
                       </p>
+                      <p className="truncate text-sm text-muted-foreground mt-1">{candidate.email || "No email detected"}</p>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Badge className="rounded-full border-0 bg-sky-50 text-sky-700">CV parsed</Badge>
-                    <Badge className="rounded-full border-0 bg-white text-slate-700 ring-1 ring-sky-100">
-                      {candidate.parsed_data?.sections?.length || 0} sections detected
-                    </Badge>
+                  <div className="flex gap-2 self-end sm:self-auto">
+                    <button
+                      onClick={() => openCandidateDetails(candidate)}
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 bg-white/50 text-muted-foreground shadow-sm transition hover:bg-white hover:text-primary hover:shadow-md hover:-translate-y-1"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(candidate.id)}
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 bg-white/50 text-muted-foreground shadow-sm transition hover:bg-white hover:text-destructive hover:shadow-md hover:-translate-y-1"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </button>
                   </div>
+                </div>
 
-                  <div className="mt-4 rounded-[1.5rem] border border-sky-100 bg-white/88 p-4">
-                    <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Preview</p>
-                    <p className="mt-2 line-clamp-4 text-sm leading-7 text-slate-500">
-                      {candidate.parsed_data?.raw_text || "No parsed content available yet."}
+                <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="rounded-xl border border-white/50 bg-white/40 px-5 py-4 shadow-sm">
+                    <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Email</p>
+                    <p className="mt-2 truncate text-sm font-medium text-foreground">{candidate.email || "N/A"}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/50 bg-white/40 px-5 py-4 shadow-sm">
+                    <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Phone</p>
+                    <p className="mt-2 truncate text-sm font-medium text-foreground">{candidate.phone || "N/A"}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/50 bg-white/40 px-5 py-4 shadow-sm">
+                    <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Uploaded</p>
+                    <p className="mt-2 text-sm font-medium text-foreground">
+                      {formatUploadedDate(candidate.uploaded_at)}
                     </p>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <Badge className="badge-pale-green rounded-md border-0 uppercase font-mono text-[10px]">CV parsed</Badge>
+                  <Badge className="badge-pale-yellow rounded-md border-0 uppercase font-mono text-[10px]">
+                    {candidate.parsed_data?.sections?.length || 0} sections detected
+                  </Badge>
+                </div>
+
+                <div className="mt-6 rounded-xl border border-white/50 bg-white/40 p-6 shadow-sm">
+                  <p className="flex items-center gap-2 text-[11px] uppercase tracking-widest text-muted-foreground font-mono">
+                    <FileText className="h-3.5 w-3.5" />
+                    Preview
+                  </p>
+                  <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-muted-foreground">
+                    {candidate.parsed_data?.raw_text || "No parsed content available yet."}
+                  </p>
+                </div>
+              </motion.div>
             ))}
+            </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
       )}
 
       <Dialog open={!!selectedCandidate} onOpenChange={() => setSelectedCandidate(null)}>
-        <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] overflow-y-auto rounded-[1.75rem] border border-sky-100 bg-white p-0 sm:max-h-[88vh] sm:max-w-3xl">
-          <DialogHeader className="border-b border-sky-100 bg-sky-50/60 px-4 py-4 sm:px-6 sm:py-5">
-            <DialogTitle className="flex items-center gap-3 text-slate-900">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 text-sm font-bold text-white">
+        <DialogContent className="max-h-[calc(100dvh-2rem)] max-w-[calc(100%-2rem)] overflow-y-auto rounded-[2.5rem] border border-white/60 bg-white/90 p-0 shadow-2xl backdrop-blur-3xl sm:max-h-[90vh] sm:max-w-4xl">
+          <DialogHeader className="border-b border-white/40 bg-gradient-to-br from-white/80 to-white/40 px-8 py-10 backdrop-blur-md">
+            <DialogTitle className="flex items-center gap-6 text-foreground font-heading text-4xl">
+              <div className="flex h-20 w-20 items-center justify-center rounded-[2rem] bg-gradient-to-br from-primary to-indigo-600 text-white shadow-lg font-sans text-3xl font-bold">
                 {selectedCandidate?.name?.charAt(0)?.toUpperCase() || "?"}
               </div>
-              {selectedCandidate?.name || "Candidate details"}
+              <div className="flex flex-col items-start gap-2">
+                <span>{selectedCandidate?.name || "Candidate details"}</span>
+                <Badge className="badge-pale-blue rounded-md border-0 font-mono text-sm uppercase px-3 py-1">Profile View</Badge>
+              </div>
             </DialogTitle>
           </DialogHeader>
 
           {selectedCandidate ? (
-            <div className="space-y-5 p-4 sm:p-6">
-              <div className="rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-4">
-                <div className="flex items-start gap-3">
-                  <UserCircle className="mt-1 h-4 w-4 text-blue-600" />
+            <div className="space-y-8 p-6 sm:p-8">
+              <div className="rounded-2xl border border-white/50 bg-white/60 p-8 shadow-sm">
+                <div className="flex items-start gap-4">
+                  <UserCircle className="mt-1 h-6 w-6 text-primary" />
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">Parsed identity</p>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                    <p className="font-heading text-xl font-semibold text-foreground">Parsed identity</p>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                       Parser output is editable because CV layouts can mix names, locations, links, and contact lines.
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-4 md:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label>Name</Label>
+                <div className="mt-8 grid gap-6 md:grid-cols-3">
+                  <div className="space-y-3">
+                    <Label className="text-xs uppercase tracking-widest text-muted-foreground font-mono">Name</Label>
                     <Input
                       value={candidateDraft.name}
                       onChange={(event) => setCandidateDraft((current) => ({ ...current, name: event.target.value }))}
-                      className="h-11 rounded-xl bg-white"
+                      className="h-12 rounded-xl border-white/50 bg-white/50 shadow-sm focus-visible:ring-primary/30"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <Mail className="h-3.5 w-3.5 text-blue-600" />
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground font-mono">
+                      <Envelope className="h-3.5 w-3.5" />
                       Email
                     </Label>
                     <Input
                       value={candidateDraft.email}
                       onChange={(event) => setCandidateDraft((current) => ({ ...current, email: event.target.value }))}
-                      className="h-11 rounded-xl bg-white"
+                      className="h-12 rounded-xl border-white/50 bg-white/50 shadow-sm focus-visible:ring-primary/30"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <Phone className="h-3.5 w-3.5 text-blue-600" />
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground font-mono">
+                      <Phone className="h-3.5 w-3.5" />
                       Phone
                     </Label>
                     <Input
                       value={candidateDraft.phone}
                       onChange={(event) => setCandidateDraft((current) => ({ ...current, phone: event.target.value }))}
-                      className="h-11 rounded-xl bg-white"
+                      className="h-12 rounded-xl border-white/50 bg-white/50 shadow-sm focus-visible:ring-primary/30"
                     />
                   </div>
                 </div>
 
-                <div className="mt-4 flex justify-end">
-                  <Button
+                <div className="mt-8 flex justify-end">
+                  <button
                     onClick={handleSaveCandidate}
                     disabled={savingCandidate}
-                    className="h-10 rounded-xl gradient-blue px-4 text-white shadow-md shadow-sky-200"
+                    className="premium-button flex h-11 items-center justify-center px-8 text-sm font-medium shadow-sm"
                   >
                     {savingCandidate ? "Saving..." : "Save identity"}
-                  </Button>
+                  </button>
                 </div>
               </div>
 
               {selectedCandidate.parsed_data?.parse_confidence ? (
-                <div className="grid gap-3 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-3">
                   {Object.entries(selectedCandidate.parsed_data.parse_confidence).map(([field, confidence]) => (
-                    <div key={field} className="rounded-2xl border border-sky-100 bg-white px-4 py-3">
-                      <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{field}</p>
-                      <p className="mt-1 text-sm font-semibold capitalize text-slate-700">{String(confidence)}</p>
+                    <div key={field} className="rounded-2xl border border-white/50 bg-white/50 px-6 py-5 shadow-sm">
+                      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">{field}</p>
+                      <p className="mt-2 font-heading text-2xl font-medium capitalize text-foreground">{String(confidence)}</p>
                     </div>
                   ))}
                 </div>
               ) : null}
 
               <div>
-                <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <FileText className="h-4 w-4 text-blue-600" />
+                <p className="flex items-center gap-3 font-heading text-xl font-semibold text-foreground">
+                  <FileText className="h-5 w-5 text-primary" />
                   Parsed CV content
                 </p>
-                <div className="mt-3 rounded-[1.5rem] border border-sky-100 bg-slate-50 p-4 text-sm leading-7 whitespace-pre-wrap text-slate-600 max-h-[26rem] overflow-y-auto">
+                <div className="mt-5 rounded-2xl border border-white/50 bg-white/50 p-8 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground max-h-[32rem] overflow-y-auto font-mono shadow-inner">
                   {selectedCandidate.parsed_data?.raw_text || "No parsed content available."}
                 </div>
               </div>
@@ -456,6 +466,6 @@ export default function CandidatesPage() {
           ) : null}
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }

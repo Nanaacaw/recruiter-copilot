@@ -2,9 +2,8 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
   Select,
@@ -16,16 +15,16 @@ import {
 import { api } from "@/lib/api";
 import type { Candidate, HealthStatus, JobDescription, Screening } from "@/types";
 import {
-  AlertTriangle,
-  Bot,
-  CheckCircle2,
-  Clock3,
-  Loader2,
-  Radar,
-  Sparkles,
+  Warning,
+  Robot,
+  CheckCircle,
+  Clock,
+  SpinnerGap,
+  Target,
+  Sparkle,
   Users,
   XCircle,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
@@ -33,19 +32,19 @@ function toErrorMessage(error: unknown): string {
 }
 
 function ScoreCircle({ score }: { score: number }) {
-  const color =
+  const colorClass =
     score >= 75
-      ? "from-emerald-400 to-cyan-400"
+      ? "bg-emerald-500"
       : score >= 50
-        ? "from-amber-400 to-orange-400"
-        : "from-rose-400 to-red-500";
+        ? "bg-amber-500"
+        : "bg-rose-500";
   const textColor =
-    score >= 75 ? "text-emerald-600" : score >= 50 ? "text-amber-600" : "text-rose-600";
+    score >= 75 ? "text-emerald-700" : score >= 50 ? "text-amber-700" : "text-rose-700";
 
   return (
-    <div className={`h-14 w-14 rounded-full bg-gradient-to-br ${color} p-[3px]`}>
-      <div className="flex h-full w-full items-center justify-center rounded-full bg-white">
-        <span className={`text-base font-bold ${textColor}`}>{score.toFixed(0)}</span>
+    <div className={`h-16 w-16 rounded-full ${colorClass} p-1 shadow-sm`}>
+      <div className="flex h-full w-full items-center justify-center rounded-full bg-white/90">
+        <span className={`text-xl font-bold ${textColor}`}>{score.toFixed(0)}</span>
       </div>
     </div>
   );
@@ -60,11 +59,11 @@ function scoreTone(score: number) {
 function ScoreSummaryPill({ score }: { score: number }) {
   return (
     <div
-      className={`flex shrink-0 items-center gap-2 rounded-2xl border px-3 py-2 ${scoreTone(score)}`}
+      className={`flex shrink-0 items-center gap-2 rounded-2xl border px-4 py-3 shadow-sm ${scoreTone(score)}`}
       aria-label={`Overall score ${score.toFixed(0)}`}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">Score</span>
-      <span className="text-lg font-bold leading-none">{score.toFixed(0)}</span>
+      <span className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-70">Score</span>
+      <span className="text-xl font-bold leading-none">{score.toFixed(0)}</span>
     </div>
   );
 }
@@ -77,16 +76,16 @@ function InsightTag({
   tone: "emerald" | "amber" | "rose" | "cyan" | "slate";
 }) {
   const toneClass = {
-    emerald: "bg-white text-emerald-700",
-    amber: "bg-white text-amber-700",
-    rose: "bg-white text-rose-700",
-    cyan: "bg-cyan-50 text-cyan-700",
-    slate: "bg-slate-100 text-slate-700",
+    emerald: "bg-emerald-50/80 border border-emerald-200 text-emerald-700 shadow-sm",
+    amber: "bg-amber-50/80 border border-amber-200 text-amber-700 shadow-sm",
+    rose: "bg-rose-50/80 border border-rose-200 text-rose-700 shadow-sm",
+    cyan: "bg-cyan-50/80 border border-cyan-200 text-cyan-700 shadow-sm",
+    slate: "bg-slate-50/80 border border-slate-200 text-slate-700 shadow-sm",
   }[tone];
 
   return (
     <Badge
-      className={`h-auto max-w-full shrink overflow-visible whitespace-normal break-words rounded-2xl border-0 px-2.5 py-1 text-left leading-5 ${toneClass}`}
+      className={`h-auto max-w-full shrink overflow-visible whitespace-normal break-words rounded-xl px-3 py-1.5 text-left leading-5 ${toneClass} font-mono text-[10px] uppercase`}
     >
       {children}
     </Badge>
@@ -194,538 +193,526 @@ export default function ScreeningPage() {
     ? `${selectedJob.title}${selectedJob.department ? ` - ${selectedJob.department}` : ""}`
     : undefined;
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 100, damping: 20 } },
+  };
+
   return (
-    <div className="page-shell space-y-6 sm:space-y-8">
-      <section className="hero-mesh soft-panel overflow-hidden rounded-[1.5rem] border-0 sm:rounded-[2rem]">
-        <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
-                <Radar className="h-3.5 w-3.5 text-indigo-600" />
+    <motion.div initial="hidden" animate="show" variants={containerVariants} className="page-shell space-y-12 sm:space-y-16">
+      <motion.section variants={itemVariants} className="glass-panel overflow-hidden relative">
+        <div className="absolute top-0 right-0 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative flex flex-col gap-6 lg:p-4">
+          <div className="flex flex-col gap-10 xl:flex-row xl:items-end xl:justify-between">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-md bg-secondary px-2.5 py-1 text-[11px] uppercase tracking-widest text-muted-foreground font-mono">
+                <Target className="h-3.5 w-3.5 text-foreground" />
                 Screening workspace
               </div>
 
               <div>
-                <h1 className="max-w-4xl text-2xl font-semibold text-slate-900 sm:text-3xl md:text-4xl">
+                <h1 className="max-w-4xl font-heading text-4xl tracking-tighter text-foreground sm:text-5xl md:text-6xl leading-[1.1]">
                   Keep screening simple: pick one role, pick the candidate batch, then review the shortlist.
                 </h1>
-                <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
+                <p className="mt-6 max-w-3xl text-base leading-relaxed text-muted-foreground">
                   The layout is now more linear so HR can move in a 1-2-3 flow without jumping across too many cards.
                   Stored results still load automatically when you switch job descriptions.
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Badge className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-cyan-700">
-                  <Bot className="mr-1.5 h-3.5 w-3.5" />
+                <Badge className="badge-pale-blue rounded-md border-0 px-3 py-1.5 text-[11px] uppercase tracking-widest font-mono">
+                  <Robot className="mr-1.5 h-3.5 w-3.5" weight="fill" />
                   {(health?.ai_provider || "openai").toUpperCase()} / {health?.ai_model || "qwen2.5:7b"}
                 </Badge>
-                <Badge className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700">
-                  <Users className="mr-1.5 h-3.5 w-3.5" />
+                <Badge className="badge-pale-green rounded-md border-0 px-3 py-1.5 text-[11px] uppercase tracking-widest font-mono">
+                  <Users className="mr-1.5 h-3.5 w-3.5" weight="fill" />
                   {selectedCandidates.length} candidate{selectedCandidates.length === 1 ? "" : "s"} selected
                 </Badge>
-                <Badge className="rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-slate-700">
+                <Badge className="badge-pale-yellow rounded-md border-0 px-3 py-1.5 text-[11px] uppercase tracking-widest font-mono">
                   {sortedResults.length} stored result{sortedResults.length === 1 ? "" : "s"}
                 </Badge>
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3 xl:w-[460px]">
-              <Card className="border-0 bg-white/80 shadow-sm">
-                <CardContent className="p-4">
-                  <p className="text-xs text-slate-500">Step 1</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">
-                    {selectedJob ? selectedJob.title : "Pick a role"}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="border-0 bg-white/80 shadow-sm">
-                <CardContent className="p-4">
-                  <p className="text-xs text-slate-500">Step 2</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">
-                    {selectedCandidates.length} candidate{selectedCandidates.length === 1 ? "" : "s"}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="border-0 bg-white/80 shadow-sm">
-                <CardContent className="p-4">
-                  <p className="text-xs text-slate-500">Provider</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">
-                    {health?.status === "healthy" ? "Ready" : "Checking"}
-                  </p>
-                </CardContent>
-              </Card>
+            <div className="grid gap-6 sm:grid-cols-3 xl:w-[500px]">
+              <div className="rounded-[2rem] border border-white/60 bg-white/70 p-6 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-md">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-mono font-semibold">Step 1</p>
+                <p className="mt-3 text-base font-bold text-slate-900 leading-tight">
+                  {selectedJob ? selectedJob.title : "Pick a role"}
+                </p>
+              </div>
+              <div className="rounded-[2rem] border border-white/60 bg-white/70 p-6 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-md">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-mono font-semibold">Step 2</p>
+                <p className="mt-3 text-base font-bold text-slate-900 leading-tight">
+                  {selectedCandidates.length} candidate{selectedCandidates.length === 1 ? "" : "s"}
+                </p>
+              </div>
+              <div className="rounded-[2rem] border border-white/60 bg-white/70 p-6 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-md">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-mono font-semibold">Provider</p>
+                <p className="mt-3 text-base font-bold text-slate-900 leading-tight">
+                  {health?.status === "healthy" ? "Ready" : "Checking"}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {errorMessage ? (
-        <Alert className="border border-amber-200 bg-amber-50/90 text-amber-900">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Screening request failed</AlertTitle>
+        <Alert className="border border-rose-200 bg-rose-50 text-rose-900 rounded-md">
+          <Warning className="h-4 w-4" />
+          <AlertTitle className="font-heading">Screening request failed</AlertTitle>
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       ) : null}
 
       {screening ? (
-        <Card className="soft-panel border-0">
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-base font-semibold text-slate-900">AI screening in progress</p>
-                <p className="text-sm text-slate-500">
-                  Requests run sequentially with retry and backoff to reduce rate-limit pressure.
-                </p>
-              </div>
-              <Badge className="rounded-full border-0 bg-indigo-50 text-indigo-700">
-                <Clock3 className="mr-1.5 h-3.5 w-3.5" />
-                Processing batch
-              </Badge>
+        <motion.div variants={itemVariants} className="glass-panel bg-primary/5 border-primary/20">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="font-heading text-xl font-semibold text-foreground">AI screening in progress</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Requests run sequentially with retry and backoff to reduce rate-limit pressure.
+              </p>
             </div>
-            <div className="mt-4">
-              <Progress value={68} />
-            </div>
-          </CardContent>
-        </Card>
+            <Badge className="badge-pale-blue rounded-md border-0 font-mono">
+              <Clock className="mr-1.5 h-3.5 w-3.5" />
+              Processing batch
+            </Badge>
+          </div>
+          <div className="mt-8">
+            <Progress value={68} className="bg-white/50 h-2 [&>div]:bg-primary" />
+          </div>
+        </motion.div>
       ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,360px)]">
-        <div className="min-w-0 space-y-6">
-          <Card className="soft-panel border-0">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
-                  1
-                </span>
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-900">Pick the job description</h2>
-                  <p className="text-sm text-slate-500">Use one role per batch so the ranking stays clear.</p>
-                </div>
+        <div className="min-w-0 space-y-8">
+          <motion.div variants={itemVariants} className="rounded-[2.5rem] border border-white/60 bg-white/70 p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-shadow duration-300">
+            <div className="flex items-center gap-4">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground shadow-sm font-mono">
+                1
+              </span>
+              <div>
+                <h2 className="font-heading text-2xl font-semibold text-foreground">Pick the job description</h2>
+                <p className="text-sm text-muted-foreground mt-1">Use one role per batch so the ranking stays clear.</p>
               </div>
+            </div>
 
-              <div className="mt-5 space-y-4">
-                <Select value={selectedJd} onValueChange={(value) => value && setSelectedJd(value)}>
-                  <SelectTrigger className="h-12 w-full rounded-2xl border-slate-200 bg-white/90">
-                    <SelectValue placeholder="Choose a job description..." className="min-w-0 truncate">
-                      {selectedJobLabel}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {jds.map((jd) => (
-                      <SelectItem key={jd.id} value={jd.id}>
-                        {jd.title} - {jd.department || "No department"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="mt-8 space-y-4">
+              <Select value={selectedJd} onValueChange={(value) => value && setSelectedJd(value)}>
+                <SelectTrigger className="h-14 w-full rounded-xl border-white/50 bg-white/50 shadow-sm">
+                  <SelectValue placeholder="Choose a job description..." className="min-w-0 truncate text-base">
+                    {selectedJobLabel}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {jds.map((jd) => (
+                    <SelectItem key={jd.id} value={jd.id}>
+                      {jd.title} - {jd.department || "No department"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-                {selectedJob ? (
-                  <div className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-5">
-                    <div className="min-w-0">
-                      <p className="truncate text-base font-semibold text-slate-900">{selectedJob.title}</p>
-                      <p className="truncate text-sm text-slate-500">
-                        {selectedJob.department || "No department set"}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge className="rounded-full border-0 bg-indigo-50 text-indigo-700">
-                        {selectedJob.experience_level} level
-                      </Badge>
-                      <Badge className="rounded-full border-0 bg-cyan-50 text-cyan-700">
-                        {selectedJob.required_skills.length} skill{selectedJob.required_skills.length === 1 ? "" : "s"}
-                      </Badge>
-                      <Badge className="rounded-full border-0 bg-emerald-50 text-emerald-700">
-                        {selectedJob.min_experience_years}+ year{selectedJob.min_experience_years === 1 ? "" : "s"} min
-                      </Badge>
-                    </div>
-                    <p className="mt-3 text-sm leading-7 text-slate-600">
-                      {selectedJob.description || "No detailed description entered yet."}
+              {selectedJob ? (
+                <div className="rounded-2xl border border-white/50 bg-white/40 p-6 shadow-sm">
+                  <div className="min-w-0">
+                    <p className="truncate font-heading text-xl font-semibold text-foreground">{selectedJob.title}</p>
+                    <p className="truncate text-sm text-muted-foreground mt-1">
+                      {selectedJob.department || "No department set"}
                     </p>
                   </div>
-                ) : (
-                  <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-white/75 p-5 text-sm text-slate-500">
-                    No job description selected yet.
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Badge className="badge-pale-blue rounded-md border-0 font-mono text-[10px] uppercase">
+                      {selectedJob.experience_level} level
+                    </Badge>
+                    <Badge className="badge-pale-green rounded-md border-0 font-mono text-[10px] uppercase">
+                      {selectedJob.required_skills.length} skill{selectedJob.required_skills.length === 1 ? "" : "s"}
+                    </Badge>
+                    <Badge className="badge-pale-yellow rounded-md border-0 font-mono text-[10px] uppercase">
+                      {selectedJob.min_experience_years}+ year{selectedJob.min_experience_years === 1 ? "" : "s"} min
+                    </Badge>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="soft-panel border-0">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700">
-                  2
-                </span>
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-900">Choose candidates for this run</h2>
-                  <p className="text-sm text-slate-500">Keep the list tight first, then expand after the first pass looks right.</p>
+                  <p className="mt-4 text-sm leading-relaxed text-muted-foreground max-w-3xl">
+                    {selectedJob.description || "No detailed description entered yet."}
+                  </p>
                 </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-primary/20 bg-white/30 p-6 text-sm text-muted-foreground text-center">
+                  No job description selected yet.
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          <motion.div variants={itemVariants} className="rounded-[2.5rem] border border-white/60 bg-white/70 p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-shadow duration-300">
+            <div className="flex items-center gap-4">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground shadow-sm font-mono">
+                2
+              </span>
+              <div>
+                <h2 className="font-heading text-2xl font-semibold text-foreground">Choose candidates for this run</h2>
+                <p className="text-sm text-muted-foreground mt-1">Keep the list tight first, then expand after the first pass looks right.</p>
               </div>
+            </div>
 
-              <div className="mt-5 space-y-3">
-                {candidates.length === 0 ? (
-                  <div className="rounded-[1.5rem] border border-dashed border-slate-200 bg-white/75 p-5 text-sm text-slate-500">
-                    No candidates found. Upload CVs first.
-                  </div>
-                ) : (
-                  candidates.map((candidate) => {
-                    const checked = selectedCandidates.includes(candidate.id);
+            <div className="mt-8 space-y-4">
+              {candidates.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-primary/20 bg-white/30 p-6 text-sm text-muted-foreground text-center">
+                  No candidates found. Upload CVs first.
+                </div>
+              ) : (
+                candidates.map((candidate) => {
+                  const checked = selectedCandidates.includes(candidate.id);
 
-                    return (
-                      <label
-                        key={candidate.id}
-                        className={`flex cursor-pointer flex-col items-start gap-3 rounded-[1.5rem] border px-4 py-3 transition-all sm:flex-row sm:items-center ${
-                          checked
-                            ? "border-indigo-200 bg-indigo-50/70 shadow-sm"
-                            : "border-slate-200/70 bg-white/75 hover:bg-white"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleCandidate(candidate.id)}
-                          className="rounded accent-indigo-500"
-                        />
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-cyan-400 text-xs font-bold text-white">
-                          {candidate.name?.charAt(0)?.toUpperCase() || "?"}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-slate-900">
-                            {candidate.name || "Unnamed candidate"}
-                          </p>
-                          <p className="truncate text-xs text-slate-500">{candidate.email || "No email detected"}</p>
-                        </div>
-                        <div className="w-full sm:w-auto">
-                          {checked ? (
-                            <Badge className="rounded-full border-0 bg-indigo-100 text-indigo-700">Selected</Badge>
-                          ) : null}
-                        </div>
-                      </label>
-                    );
-                  })
-                )}
-              </div>
+                  return (
+                    <label
+                      key={candidate.id}
+                      className={`flex cursor-pointer flex-col items-start gap-4 rounded-2xl border px-6 py-5 transition-all sm:flex-row sm:items-center shadow-sm hover:-translate-y-0.5 ${
+                        checked
+                          ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                          : "border-white/50 bg-white/40 hover:bg-white/60"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleCandidate(candidate.id)}
+                        className="h-5 w-5 rounded-md border-white/50 accent-primary"
+                      />
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-sm font-mono">
+                        {candidate.name?.charAt(0)?.toUpperCase() || "?"}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-heading text-lg font-medium text-foreground">
+                          {candidate.name || "Unnamed candidate"}
+                        </p>
+                        <p className="truncate text-sm text-muted-foreground mt-1">{candidate.email || "No email detected"}</p>
+                      </div>
+                      <div className="w-full sm:w-auto">
+                        {checked ? (
+                          <Badge className="badge-pale-green rounded-md border-0 font-mono text-[10px] uppercase">Selected</Badge>
+                        ) : null}
+                      </div>
+                    </label>
+                  );
+                })
+              )}
+            </div>
 
-              {candidates.length > 0 ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-4 rounded-xl text-xs text-slate-600"
-                  onClick={() =>
-                    setSelectedCandidates(
-                      selectedCandidates.length === candidates.length
-                        ? []
-                        : candidates.map((candidate) => candidate.id)
-                    )
-                  }
-                >
-                  {selectedCandidates.length === candidates.length ? "Clear all" : "Select all candidates"}
-                </Button>
-              ) : null}
-            </CardContent>
-          </Card>
+            {candidates.length > 0 ? (
+              <button
+                className="mt-6 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() =>
+                  setSelectedCandidates(
+                    selectedCandidates.length === candidates.length
+                      ? []
+                      : candidates.map((candidate) => candidate.id)
+                  )
+                }
+              >
+                {selectedCandidates.length === candidates.length ? "Clear all" : "Select all candidates"}
+              </button>
+            ) : null}
+          </motion.div>
         </div>
 
-        <div className="w-full min-w-0 space-y-6 xl:sticky xl:top-24 xl:self-start xl:justify-self-end">
-          <Card className="soft-panel w-full overflow-hidden border-0">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
-                  3
-                </span>
-                <div>
-                  <h2 className="text-xl font-semibold text-slate-900">Review and run</h2>
-                  <p className="text-sm text-slate-500">Make sure the basics are ready, then start the batch.</p>
-                </div>
+        <div className="w-full min-w-0 space-y-8 xl:sticky xl:top-24 xl:self-start xl:justify-self-end">
+          <motion.div variants={itemVariants} className="rounded-[2.5rem] border border-white/60 bg-white/70 p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-shadow duration-300 w-full">
+            <div className="flex items-center gap-4">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground shadow-sm font-mono">
+                3
+              </span>
+              <div>
+                <h2 className="font-heading text-2xl font-semibold text-foreground">Review and run</h2>
+                <p className="text-sm text-muted-foreground mt-1">Make sure the basics are ready, then start the batch.</p>
               </div>
+            </div>
 
-              <div className="mt-5 space-y-3">
-                {[
-                  {
-                    label: "Job description selected",
-                    done: Boolean(selectedJd),
-                  },
-                  {
-                    label: "At least one candidate selected",
-                    done: selectedCandidates.length > 0,
-                  },
-                  {
-                    label: "AI provider ready",
-                    done: health?.status === "healthy",
-                  },
-                ].map((item) => (
-                  <div key={item.label} className="flex flex-col gap-2 rounded-2xl bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="text-sm text-slate-600">{item.label}</span>
-                    <Badge
-                      className={
-                        item.done
-                          ? "rounded-full border-0 bg-emerald-100 text-emerald-700"
-                          : "rounded-full border-0 bg-amber-100 text-amber-700"
-                      }
-                    >
-                      {item.done ? "Ready" : "Waiting"}
-                    </Badge>
+            <div className="mt-8 space-y-4">
+              {[
+                {
+                  label: "Job description selected",
+                  done: Boolean(selectedJd),
+                },
+                {
+                  label: "At least one candidate selected",
+                  done: selectedCandidates.length > 0,
+                },
+                {
+                  label: "AI provider ready",
+                  done: health?.status === "healthy",
+                },
+              ].map((item) => (
+                <div key={item.label} className="flex flex-col gap-2 rounded-2xl border border-white/50 bg-white/40 px-5 py-4 sm:flex-row sm:items-center sm:justify-between shadow-sm">
+                  <span className="text-sm text-foreground">{item.label}</span>
+                  <Badge
+                    className={
+                      item.done
+                        ? "badge-pale-green rounded-md border-0 font-mono text-[10px] uppercase"
+                        : "badge-pale-yellow rounded-md border-0 font-mono text-[10px] uppercase"
+                    }
+                  >
+                    {item.done ? "Ready" : "Waiting"}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={handleScreen}
+              disabled={!selectedJd || selectedCandidates.length === 0 || screening}
+              className="premium-button mt-8 h-14 w-full flex items-center justify-center px-4"
+            >
+              {screening ? (
+                <>
+                  <SpinnerGap className="mr-2 h-4 w-4 animate-spin" />
+                  Screening in progress...
+                </>
+              ) : (
+                <>
+                  <Sparkle className="mr-2 h-4 w-4" weight="fill" />
+                  Run AI screening
+                </>
+              )}
+            </button>
+
+            {selectedCandidateCards.length > 0 ? (
+              <div className="mt-6 flex flex-wrap gap-2">
+                {selectedCandidateCards.slice(0, 6).map((candidate) => (
+                  <Badge key={candidate.id} className="badge-pale-blue rounded-md border-0 font-mono text-[10px] uppercase">
+                    {candidate.name || "Candidate"}
+                  </Badge>
+                ))}
+                {selectedCandidateCards.length > 6 ? (
+                  <Badge className="badge-pale-blue rounded-md border-0 font-mono text-[10px] uppercase">
+                    +{selectedCandidateCards.length - 6} more
+                  </Badge>
+                ) : null}
+              </div>
+            ) : null}
+          </motion.div>
+
+          <motion.div variants={itemVariants} className="rounded-[2.5rem] border border-white/60 bg-white/70 p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-shadow duration-300 w-full">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="font-heading text-xl font-semibold text-foreground">Stored results for this role</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  A quick view of the shortlist already saved for the selected job description.
+                </p>
+              </div>
+              <Badge className="rounded-md border-0 bg-foreground text-background font-mono px-3 py-1">
+                {resultsLoading ? "Loading" : sortedResults.length}
+              </Badge>
+            </div>
+
+            {resultsLoading ? (
+              <div className="py-12 text-center text-sm text-muted-foreground flex flex-col items-center">
+                <SpinnerGap className="mb-4 h-6 w-6 animate-spin" />
+                Fetching screening history...
+              </div>
+            ) : sortedResults.length === 0 ? (
+              <div className="mt-6 rounded-2xl border border-dashed border-primary/20 bg-white/30 p-8 text-sm text-muted-foreground text-center">
+                No screening results for this job description yet.
+              </div>
+            ) : (
+              <div className="mt-8 space-y-4">
+                {sortedResults.slice(0, 4).map((result, index) => (
+                  <div
+                    key={result.id}
+                    className="flex flex-col gap-4 rounded-2xl border border-white/50 bg-white/40 px-6 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between hover:bg-white transition-colors"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-heading text-base font-semibold text-foreground">
+                        #{index + 1} {result.candidate?.name || "Candidate"}
+                      </p>
+                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                        {result.ai_analysis.summary || "Stored screening result"}
+                      </p>
+                    </div>
+                    <ScoreSummaryPill score={result.overall_score} />
                   </div>
                 ))}
               </div>
-
-              <Button
-                onClick={handleScreen}
-                disabled={!selectedJd || selectedCandidates.length === 0 || screening}
-                className="mt-5 h-12 w-full rounded-2xl border-0 gradient-blue text-white shadow-lg shadow-blue-200"
-              >
-                {screening ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Screening in progress...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Run AI screening
-                  </>
-                )}
-              </Button>
-
-              {selectedCandidateCards.length > 0 ? (
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {selectedCandidateCards.slice(0, 6).map((candidate) => (
-                    <Badge key={candidate.id} className="rounded-full border-0 bg-slate-100 text-slate-700">
-                      {candidate.name || "Candidate"}
-                    </Badge>
-                  ))}
-                  {selectedCandidateCards.length > 6 ? (
-                    <Badge className="rounded-full border-0 bg-slate-100 text-slate-700">
-                      +{selectedCandidateCards.length - 6} more
-                    </Badge>
-                  ) : null}
-                </div>
-              ) : null}
-            </CardContent>
-          </Card>
-
-          <Card className="soft-panel w-full overflow-hidden border-0">
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-900">Stored results for this role</h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    A quick view of the shortlist already saved for the selected job description.
-                  </p>
-                </div>
-                <Badge className="rounded-full border-0 bg-slate-900 text-white">
-                  {resultsLoading ? "Loading" : sortedResults.length}
-                </Badge>
-              </div>
-
-              {resultsLoading ? (
-                <div className="py-10 text-center text-sm text-slate-500">
-                  <Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin" />
-                  Fetching screening history...
-                </div>
-              ) : sortedResults.length === 0 ? (
-                <div className="mt-5 rounded-[1.5rem] border border-dashed border-slate-200 bg-white/75 p-5 text-sm text-slate-500">
-                  No screening results for this job description yet.
-                </div>
-              ) : (
-                <div className="mt-5 space-y-3">
-                  {sortedResults.slice(0, 4).map((result, index) => (
-                    <div
-                      key={result.id}
-                      className="flex flex-col gap-3 rounded-[1.5rem] border border-slate-200 bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-slate-900">
-                          #{index + 1} {result.candidate?.name || "Candidate"}
-                        </p>
-                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
-                          {result.ai_analysis.summary || "Stored screening result"}
-                        </p>
-                      </div>
-                      <ScoreSummaryPill score={result.overall_score} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            )}
+          </motion.div>
         </div>
       </div>
 
       <section>
-        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Screening results</h2>
-            <p className="text-sm text-slate-500">
+            <h2 className="font-heading text-3xl font-semibold text-foreground">Screening results</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
               Results are shown in a simpler reading order: summary first, score breakdown second, follow-up notes last.
             </p>
           </div>
           {loading ? (
-            <Badge className="w-fit rounded-full border-0 bg-slate-100 text-slate-700">Loading workspace</Badge>
+            <Badge className="badge-pale-yellow rounded-md border-0 font-mono text-[10px] uppercase">Loading workspace</Badge>
           ) : null}
         </div>
 
         {sortedResults.length === 0 ? (
-          <Card className="soft-panel border-0">
-            <CardContent className="py-16 text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
-                <Radar className="h-7 w-7 text-slate-300" />
-              </div>
-              <p className="text-slate-500">
-                Select a job description to review existing results, or run a new screening batch to generate them.
-              </p>
-            </CardContent>
-          </Card>
+          <motion.div variants={itemVariants} className="glass-panel mt-8 py-24 text-center flex flex-col items-center">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/50 shadow-sm border border-white/60">
+              <Target className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground">
+              Select a job description to review existing results, or run a new screening batch to generate them.
+            </p>
+          </motion.div>
         ) : (
-          <div className="space-y-4">
+          <motion.div variants={containerVariants} className="mt-8 space-y-8">
+            <AnimatePresence>
             {sortedResults.map((result, index) => (
-              <Card key={result.id} className="soft-panel border-0">
-                <CardContent className="p-4 sm:p-6">
-                  <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <Badge className="rounded-full border-0 bg-slate-900 text-white">Rank #{index + 1}</Badge>
-                        <h3 className="text-xl font-semibold text-slate-900">
-                          {result.candidate?.name || "Candidate"}
-                        </h3>
-                        <span className="text-sm text-slate-500">{result.candidate?.email || "No email detected"}</span>
-                      </div>
-
-                      <p className="mt-4 rounded-[1.5rem] bg-slate-50 px-4 py-4 text-sm leading-7 text-slate-600">
-                        {result.ai_analysis.summary || "No AI summary stored for this result."}
-                      </p>
+              <motion.div layout layoutId={`result-${result.id}`} variants={itemVariants} key={result.id} className="rounded-[2.5rem] border border-white/60 bg-white/70 p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl transition-all duration-300">
+                <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-4">
+                      <Badge className="rounded-md border-0 bg-foreground text-background font-mono px-2 py-1 text-xs">Rank #{index + 1}</Badge>
+                      <h3 className="font-heading text-3xl font-semibold text-foreground">
+                        {result.candidate?.name || "Candidate"}
+                      </h3>
+                      <span className="text-sm text-muted-foreground">{result.candidate?.email || "No email detected"}</span>
                     </div>
 
-                    <div className="flex w-full items-center gap-3 rounded-[1.5rem] border border-slate-200 bg-white/85 px-4 py-3 sm:w-auto">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Overall score</p>
-                        <p className="mt-1 text-sm font-medium text-slate-500">Screening fit</p>
-                      </div>
-                      <ScoreCircle score={result.overall_score} />
-                    </div>
+                    <p className="mt-6 rounded-2xl border border-white/50 bg-white/40 px-6 py-5 text-sm leading-relaxed text-muted-foreground max-w-3xl shadow-inner">
+                      {result.ai_analysis.summary || "No AI summary stored for this result."}
+                    </p>
                   </div>
 
-                  <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    {[
-                      { label: "Skills", score: result.skills_score },
-                      { label: "Experience", score: result.experience_score },
-                      { label: "Education", score: result.education_score },
-                      { label: "Certifications", score: result.certification_score },
-                    ].map((item) => (
-                      <div key={item.label} className="rounded-[1.25rem] border border-slate-200 bg-white/80 p-4">
-                        <p className="text-xs uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
-                        <p className="mt-2 text-2xl font-semibold text-slate-900">{item.score.toFixed(0)}</p>
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-                          <div
-                            className={`h-full rounded-full ${
-                              item.score >= 75
-                                ? "bg-gradient-to-r from-emerald-400 to-cyan-400"
-                                : item.score >= 50
-                                  ? "bg-gradient-to-r from-amber-400 to-orange-400"
-                                  : "bg-gradient-to-r from-rose-400 to-red-500"
-                            }`}
-                            style={{ width: `${item.score}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
+                  <div className="flex w-full items-center gap-5 rounded-2xl border border-white/50 bg-white/50 px-6 py-5 shadow-sm sm:w-auto">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Overall score</p>
+                      <p className="mt-2 text-sm font-medium text-foreground">Screening fit</p>
+                    </div>
+                    <ScoreCircle score={result.overall_score} />
                   </div>
+                </div>
 
-                  <div className="mt-5 grid gap-4 xl:grid-cols-3">
-                    <div className="min-w-0 overflow-hidden rounded-[1.5rem] border border-emerald-200 bg-emerald-50/70 p-4">
-                      <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-700">
-                        <CheckCircle2 className="h-4 w-4" />
-                        Strengths
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {result.strengths.length > 0 ? (
-                          result.strengths.slice(0, 4).map((item, itemIndex) => (
-                              <InsightTag key={`${result.id}-strength-${itemIndex}`} tone="emerald">
-                                {item}
-                              </InsightTag>
-                            ))
-                        ) : (
-                          <p className="text-sm text-emerald-800/70">No major strengths recorded.</p>
-                        )}
+                <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  {[
+                    { label: "Skills", score: result.skills_score },
+                    { label: "Experience", score: result.experience_score },
+                    { label: "Education", score: result.education_score },
+                    { label: "Certifications", score: result.certification_score },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-[2rem] border border-white/60 bg-white/70 p-8 shadow-sm">
+                      <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-mono font-semibold">{item.label}</p>
+                      <p className="mt-4 font-heading text-5xl font-bold text-slate-900">{item.score.toFixed(0)}</p>
+                      <div className="mt-6 h-2 overflow-hidden rounded-full bg-white/50">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${item.score}%` }}
+                        />
                       </div>
                     </div>
+                  ))}
+                </div>
 
-                    <div className="min-w-0 overflow-hidden rounded-[1.5rem] border border-amber-200 bg-amber-50/70 p-4">
-                      <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-700">
-                        <XCircle className="h-4 w-4" />
-                        Needs follow-up
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {result.weaknesses.length > 0 ? (
-                          result.weaknesses.slice(0, 4).map((item, itemIndex) => (
-                              <InsightTag key={`${result.id}-weakness-${itemIndex}`} tone="amber">
-                                {item}
-                              </InsightTag>
-                            ))
-                        ) : (
-                          <p className="text-sm text-amber-800/70">No major weaknesses recorded.</p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="min-w-0 overflow-hidden rounded-[1.5rem] border border-rose-200 bg-rose-50/70 p-4">
-                      <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-rose-700">
-                        <AlertTriangle className="h-4 w-4" />
-                        Red flags
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {result.red_flags.length > 0 ? (
-                          result.red_flags.slice(0, 4).map((item, itemIndex) => (
-                              <InsightTag key={`${result.id}-flag-${itemIndex}`} tone="rose">
-                                {item}
-                              </InsightTag>
-                            ))
-                        ) : (
-                          <p className="text-sm text-rose-800/70">No red flags recorded.</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid gap-4 xl:grid-cols-2">
-                    <div className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4">
-                      <p className="text-sm font-semibold text-slate-900">Matched skills</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {result.matched_skills.length > 0 ? (
-                          result.matched_skills.slice(0, 6).map((item, itemIndex) => (
-                            <InsightTag key={`${result.id}-matched-${itemIndex}`} tone="cyan">
+                <div className="mt-8 grid gap-6 xl:grid-cols-3">
+                  <div className="min-w-0 overflow-hidden rounded-[2rem] border border-emerald-200/50 bg-emerald-50/50 p-8 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+                    <p className="mb-6 flex items-center gap-3 font-heading text-xl font-bold text-emerald-800">
+                      <CheckCircle className="h-6 w-6" />
+                      Strengths
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {result.strengths.length > 0 ? (
+                        result.strengths.slice(0, 4).map((item, itemIndex) => (
+                            <InsightTag key={`${result.id}-strength-${itemIndex}`} tone="emerald">
                               {item}
                             </InsightTag>
                           ))
-                        ) : (
-                          <p className="text-sm text-slate-500">No matched skills stored.</p>
-                        )}
-                      </div>
+                      ) : (
+                        <p className="text-sm text-emerald-800/70 font-medium">No major strengths recorded.</p>
+                      )}
                     </div>
+                  </div>
 
-                    <div className="rounded-[1.5rem] border border-slate-200 bg-white/80 p-4">
-                      <p className="text-sm font-semibold text-slate-900">Missing skills</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {result.missing_skills.length > 0 ? (
-                          result.missing_skills.slice(0, 6).map((item, itemIndex) => (
-                            <InsightTag key={`${result.id}-missing-${itemIndex}`} tone="slate">
+                  <div className="min-w-0 overflow-hidden rounded-[2rem] border border-amber-200/50 bg-amber-50/50 p-8 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+                    <p className="mb-6 flex items-center gap-3 font-heading text-xl font-bold text-amber-800">
+                      <Warning className="h-6 w-6" />
+                      Needs follow-up
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {result.weaknesses.length > 0 ? (
+                        result.weaknesses.slice(0, 4).map((item, itemIndex) => (
+                            <InsightTag key={`${result.id}-weakness-${itemIndex}`} tone="amber">
                               {item}
                             </InsightTag>
                           ))
-                        ) : (
-                          <p className="text-sm text-slate-500">No missing skills stored.</p>
-                        )}
-                      </div>
+                      ) : (
+                        <p className="text-sm text-amber-800/70 font-medium">No major weaknesses recorded.</p>
+                      )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+
+                  <div className="min-w-0 overflow-hidden rounded-[2rem] border border-rose-200/50 bg-rose-50/50 p-8 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+                    <p className="mb-6 flex items-center gap-3 font-heading text-xl font-bold text-rose-800">
+                      <Warning className="h-6 w-6" />
+                      Red flags
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {result.red_flags.length > 0 ? (
+                        result.red_flags.slice(0, 4).map((item, itemIndex) => (
+                            <InsightTag key={`${result.id}-flag-${itemIndex}`} tone="rose">
+                              {item}
+                            </InsightTag>
+                          ))
+                      ) : (
+                        <p className="text-sm text-rose-800/70 font-medium">No red flags recorded.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-8 grid gap-6 xl:grid-cols-2">
+                  <div className="rounded-2xl border border-white/50 bg-white/40 p-6 shadow-sm">
+                    <p className="font-heading text-sm font-semibold text-foreground">Matched skills</p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {result.matched_skills.length > 0 ? (
+                        result.matched_skills.slice(0, 6).map((item, itemIndex) => (
+                          <InsightTag key={`${result.id}-matched-${itemIndex}`} tone="cyan">
+                            {item}
+                          </InsightTag>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No matched skills stored.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-white/50 bg-white/40 p-6 shadow-sm">
+                    <p className="font-heading text-sm font-semibold text-foreground">Missing skills</p>
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {result.missing_skills.length > 0 ? (
+                        result.missing_skills.slice(0, 6).map((item, itemIndex) => (
+                          <InsightTag key={`${result.id}-missing-${itemIndex}`} tone="slate">
+                            {item}
+                          </InsightTag>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No missing skills stored.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             ))}
-          </div>
+            </AnimatePresence>
+          </motion.div>
         )}
       </section>
-    </div>
+    </motion.div>
   );
 }

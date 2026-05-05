@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,17 +35,17 @@ import type {
   SkillRequirement,
 } from "@/types";
 import {
-  Award,
+  Medal,
   Briefcase,
-  ChevronDown,
-  Edit2,
+  CaretDown,
+  PencilSimple,
   FileText,
   GraduationCap,
   Plus,
-  Search,
-  Trash2,
+  MagnifyingGlass,
+  Trash,
   X,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 
 type JobDescriptionForm = {
   title: string;
@@ -287,8 +288,21 @@ export default function JobDescriptionsPage() {
     }));
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 100, damping: 20 } },
+  };
+
   return (
-    <div className="page-shell space-y-6 sm:space-y-8">
+    <motion.div initial="hidden" animate="show" variants={containerVariants} className="page-shell space-y-12 sm:space-y-16">
       <Dialog
         open={dialogOpen}
         onOpenChange={(open) => {
@@ -296,99 +310,96 @@ export default function JobDescriptionsPage() {
           if (!open) resetEditor();
         }}
       >
-        <section className="rounded-[1.75rem] border border-sky-100 bg-white px-6 py-6 shadow-sm lg:px-8">
-          <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-            <div className="max-w-4xl space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
-                <Briefcase className="h-3.5 w-3.5" />
+        <motion.section variants={itemVariants} className="glass-panel relative overflow-hidden">
+          {/* Subtle decorative glow */}
+          <div className="absolute top-0 right-0 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+          
+          <div className="relative flex flex-col gap-10 xl:flex-row xl:items-start xl:justify-between">
+            <div className="max-w-4xl space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-md bg-secondary px-2.5 py-1 text-[11px] uppercase tracking-widest text-muted-foreground font-mono">
+                <Briefcase className="h-3.5 w-3.5 text-foreground" />
                 Job description workspace
               </div>
 
               <div>
-                <h1 className="text-3xl font-semibold text-slate-900 md:text-4xl">
+                <h1 className="max-w-4xl font-heading text-4xl tracking-tighter text-slate-900 sm:text-5xl md:text-6xl font-bold leading-[1.1]">
                   Write role briefs in a simpler, cleaner workspace.
                 </h1>
-                <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
+                <p className="mt-6 max-w-3xl text-base leading-relaxed text-slate-600">
                   This version reduces the visual noise and keeps the top area focused on three things:
                   current job description volume, current skill coverage, and one clear action to open the editor.
                 </p>
               </div>
 
               <div className="relative max-w-xl">
-                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <MagnifyingGlass className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   placeholder="Search by title, department, or keyword..."
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  className="h-12 rounded-2xl border-sky-100 bg-slate-50/70 pl-11 shadow-none"
+                  className="h-12 rounded-xl border-white/50 bg-white/40 pl-11 shadow-sm backdrop-blur-md focus-visible:ring-primary/30"
                 />
               </div>
             </div>
 
-            <div className="w-full max-w-md rounded-[1.5rem] border border-sky-100 bg-sky-50/70 p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Editor action</p>
-              <p className="mt-3 text-xl font-semibold text-slate-900">Create or update a role brief</p>
-              <p className="mt-2 text-sm leading-7 text-slate-500">
+            <div className="w-full max-w-md rounded-[2.5rem] border border-white/60 bg-white/70 p-10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-shadow duration-300">
+              <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-mono font-semibold">Editor action</p>
+              <p className="mt-4 font-heading text-3xl font-bold text-slate-900 leading-tight">Create or update a role brief</p>
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 Open the editor to define the role scope, required skills, experience level, and education requirements in one place.
               </p>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-8 flex flex-wrap gap-2">
                 {["Role scope", "Skills", "Education"].map((item) => (
-                  <Badge key={item} className="rounded-full border border-sky-100 bg-white text-slate-700">
+                  <Badge key={item} className="rounded-md border border-white/60 bg-white/50 text-foreground shadow-sm">
                     {item}
                   </Badge>
                 ))}
               </div>
               <DialogTrigger
                 render={
-                  <Button className="mt-5 h-11 rounded-2xl gradient-blue border-0 px-5 text-white shadow-md shadow-sky-200" />
+                  <button className="premium-button mt-10 flex h-14 w-full items-center justify-center px-8 text-sm font-semibold shadow-md" />
                 }
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 h-5 w-5" weight="bold" />
                 {editingId ? "Continue editing" : "Create new job description"}
               </DialogTrigger>
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <Card className="border border-sky-100 bg-slate-50/70 shadow-none">
-              <CardContent className="p-5">
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Total JDs</p>
-                <p className="mt-2 text-3xl font-semibold text-slate-900">{loading ? 0 : jds.length}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Structured roles currently available in the workspace.
-                </p>
-              </CardContent>
-            </Card>
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
+            <div className="rounded-[2rem] border border-white/60 bg-white/70 p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:scale-[1.02] transition-all duration-300 group">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-mono font-semibold">Total JDs</p>
+              <p className="mt-4 font-heading text-5xl font-bold text-slate-900">{loading ? 0 : jds.length}</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                Structured roles currently available in the workspace.
+              </p>
+            </div>
 
-            <Card className="border border-sky-100 bg-slate-50/70 shadow-none">
-              <CardContent className="p-5">
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Required skills</p>
-                <p className="mt-2 text-3xl font-semibold text-slate-900">{totalRequiredSkills}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Total skill items already defined across all job descriptions.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="rounded-[2rem] border border-white/60 bg-white/70 p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:scale-[1.02] transition-all duration-300 group">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-mono font-semibold">Required skills</p>
+              <p className="mt-4 font-heading text-5xl font-bold text-slate-900">{totalRequiredSkills}</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                Total skill items already defined across all job descriptions.
+              </p>
+            </div>
 
-            <Card className="border border-sky-100 bg-slate-50/70 shadow-none">
-              <CardContent className="p-5">
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-400">Average per role</p>
-                <p className="mt-2 text-3xl font-semibold text-slate-900">{averageSkillsPerRole}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Average required skill items defined per job description.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="rounded-[2rem] border border-white/60 bg-white/70 p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:scale-[1.02] transition-all duration-300 group">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-mono font-semibold">Average per role</p>
+              <p className="mt-4 font-heading text-5xl font-bold text-slate-900">{averageSkillsPerRole}</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                Average required skill items defined per job description.
+              </p>
+            </div>
           </div>
-        </section>
+        </motion.section>
 
         <DialogContent
           showCloseButton={false}
-          className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] max-w-[calc(100%-1rem)] flex-col gap-0 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white p-0 sm:h-auto sm:max-h-[min(94dvh,58rem)] sm:max-w-6xl"
+          className="flex h-[calc(100dvh-2rem)] max-h-[calc(100dvh-2rem)] max-w-[calc(100%-2rem)] flex-col gap-0 overflow-hidden rounded-[2.5rem] border border-white/60 bg-white/90 p-0 shadow-2xl backdrop-blur-3xl sm:h-auto sm:max-h-[min(94dvh,60rem)] sm:max-w-6xl"
         >
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="grid min-h-full lg:grid-cols-[minmax(0,1.15fr)_minmax(21rem,0.85fr)]">
-              <div className="p-6 md:p-8">
+            <div className="grid min-h-full lg:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)]">
+              <div className="p-8 md:p-10">
                 <DialogHeader className="gap-3">
                   <div className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
                     <Briefcase className="h-3.5 w-3.5 text-indigo-600" />
@@ -412,35 +423,35 @@ export default function JobDescriptionsPage() {
                       </p>
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label>Title *</Label>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium text-slate-700">Title *</Label>
                         <Input
                           value={form.title}
                           onChange={(event) => setForm({ ...form, title: event.target.value })}
                           placeholder="Senior Frontend Developer"
-                          className="h-12 rounded-xl"
+                          className="!h-12 rounded-xl border-white/60 bg-white/50 px-4 text-base shadow-sm focus-visible:ring-primary/30"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label>Department</Label>
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium text-slate-700">Department</Label>
                         <Input
                           value={form.department}
                           onChange={(event) => setForm({ ...form, department: event.target.value })}
                           placeholder="Engineering"
-                          className="h-12 rounded-xl"
+                          className="!h-12 rounded-xl border-white/60 bg-white/50 px-4 text-base shadow-sm focus-visible:ring-primary/30"
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Description</Label>
+                    <div className="space-y-3 pt-2">
+                      <Label className="text-sm font-medium text-slate-700">Description</Label>
                       <Textarea
                         value={form.description}
                         onChange={(event) => setForm({ ...form, description: event.target.value })}
                         placeholder="Outline the role mission, responsibilities, stack, and the outcomes expected from the hire."
                         rows={10}
-                        className="min-h-[260px] rounded-2xl"
+                        className="min-h-[260px] rounded-xl border-white/60 bg-white/50 p-5 text-base shadow-sm focus-visible:ring-primary/30"
                       />
                     </div>
                   </section>
@@ -453,14 +464,14 @@ export default function JobDescriptionsPage() {
                       </p>
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label>Experience level</Label>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium text-slate-700">Experience level</Label>
                         <Select
                           value={form.experience_level}
                           onValueChange={(value) => setForm({ ...form, experience_level: value || "mid" })}
                         >
-                          <SelectTrigger className="h-12 w-full rounded-xl">
+                          <SelectTrigger className="!h-12 w-full rounded-xl border-white/60 bg-white/50 px-4 text-base shadow-sm focus-visible:ring-primary/30">
                             <SelectValue>{experienceLevelLabels[form.experience_level] || "Mid"}</SelectValue>
                           </SelectTrigger>
                           <SelectContent>
@@ -471,8 +482,8 @@ export default function JobDescriptionsPage() {
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Minimum years</Label>
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium text-slate-700">Minimum years</Label>
                         <Input
                           type="number"
                           value={form.min_experience_years}
@@ -482,7 +493,7 @@ export default function JobDescriptionsPage() {
                               min_experience_years: Number.parseInt(event.target.value, 10) || 0,
                             })
                           }
-                          className="h-12 rounded-xl"
+                          className="!h-12 rounded-xl border-white/60 bg-white/50 px-4 text-base shadow-sm focus-visible:ring-primary/30"
                         />
                       </div>
                     </div>
@@ -490,10 +501,10 @@ export default function JobDescriptionsPage() {
                 </div>
               </div>
 
-              <div className="border-t border-slate-200/80 bg-slate-50/80 p-6 md:p-8 lg:border-l lg:border-t-0">
-                <div className="space-y-5 pb-24 md:pb-28 lg:pb-10">
-                  <Card className="border border-sky-200/70 bg-white shadow-sm">
-                    <CardContent className="space-y-4 p-5">
+              <div className="border-t border-slate-200/80 bg-slate-50/80 p-8 md:p-10 lg:border-l lg:border-t-0">
+                <div className="space-y-6 pb-24 md:pb-28 lg:pb-10">
+                  <Card className="border border-white/60 bg-white/70 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] rounded-[2rem] backdrop-blur-md">
+                    <CardContent className="space-y-5 p-6">
                       <div className="flex items-start gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
                           <FileText className="h-4 w-4" />
@@ -510,20 +521,20 @@ export default function JobDescriptionsPage() {
                         </div>
                       </div>
 
-                      <div className="grid gap-3 sm:grid-cols-3">
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
-                          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Skills</p>
-                          <p className="mt-2 text-2xl font-semibold text-slate-900">{form.required_skills.length}</p>
+                      <div className="grid gap-4 sm:grid-cols-3">
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 flex flex-col items-center justify-center text-center shadow-sm">
+                          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-medium">Skills</p>
+                          <p className="mt-3 text-4xl font-bold text-slate-900">{form.required_skills.length}</p>
                         </div>
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
-                          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Education</p>
-                          <p className="mt-2 text-2xl font-semibold text-slate-900">
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 flex flex-col items-center justify-center text-center shadow-sm">
+                          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-medium">Education</p>
+                          <p className="mt-3 text-4xl font-bold text-slate-900">
                             {form.education_requirements.length}
                           </p>
                         </div>
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
-                          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Certificates</p>
-                          <p className="mt-2 text-2xl font-semibold text-slate-900">
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 flex flex-col items-center justify-center text-center shadow-sm">
+                          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500 font-medium">Certificates</p>
+                          <p className="mt-3 text-4xl font-bold text-slate-900">
                             {form.certifications.length}
                           </p>
                         </div>
@@ -552,8 +563,8 @@ export default function JobDescriptionsPage() {
                     </CardContent>
                   </Card>
 
-                  <Card className="border border-sky-200/70 bg-white shadow-sm">
-                    <CardContent className="space-y-4 p-5">
+                  <Card className="border border-white/60 bg-white/70 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] rounded-[2rem] backdrop-blur-md">
+                    <CardContent className="space-y-5 p-6">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-sm font-semibold text-slate-900">Scoring weights</p>
@@ -571,13 +582,13 @@ export default function JobDescriptionsPage() {
                           {totalWeightPercent}%
                         </Badge>
                       </div>
-                      <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="grid gap-4 sm:grid-cols-2">
                         {weightFields.map((field) => (
                           <div
                             key={field.key}
-                            className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3"
+                            className="space-y-3 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 shadow-sm"
                           >
-                            <Label className="text-xs text-slate-500">{field.label}</Label>
+                            <Label className="text-xs font-semibold text-slate-600 uppercase tracking-widest">{field.label}</Label>
                             <Input
                               type="number"
                               step="0.05"
@@ -591,7 +602,7 @@ export default function JobDescriptionsPage() {
                                   },
                                 }))
                               }
-                              className="h-10 rounded-xl bg-white"
+                              className="!h-12 rounded-xl border-slate-200 bg-white px-4 text-base shadow-inner focus-visible:ring-primary/30"
                             />
                           </div>
                         ))}
@@ -610,7 +621,7 @@ export default function JobDescriptionsPage() {
                     </CardContent>
                   </Card>
 
-                  <Card className="border border-slate-200/80 bg-white shadow-sm">
+                  <Card className="border border-white/60 bg-white/70 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] rounded-[2rem] backdrop-blur-md overflow-hidden">
                     <CardContent className="p-0">
                       <button
                         type="button"
@@ -630,7 +641,7 @@ export default function JobDescriptionsPage() {
                           <Badge className="rounded-full border border-slate-200 bg-slate-50 text-slate-600">
                             {form.required_skills.length}
                           </Badge>
-                          <ChevronDown
+                          <CaretDown
                             className={cn(
                               "h-4 w-4 text-slate-400 transition-transform duration-200",
                               expandedSections.skills && "rotate-180"
@@ -646,9 +657,9 @@ export default function JobDescriptionsPage() {
                               onChange={(event) => setNewSkill(event.target.value)}
                               placeholder="React, TypeScript, FastAPI..."
                               onKeyDown={(event) => event.key === "Enter" && addSkill()}
-                              className="h-11 rounded-xl"
+                              className="!h-12 rounded-xl"
                             />
-                            <Button onClick={addSkill} className="rounded-xl px-4 sm:self-start">
+                            <Button onClick={addSkill} className="h-12 rounded-xl px-6 sm:self-start text-sm font-medium shadow-sm">
                               Add
                             </Button>
                           </div>
@@ -681,7 +692,7 @@ export default function JobDescriptionsPage() {
                     </CardContent>
                   </Card>
 
-                  <Card className="border border-slate-200/80 bg-white shadow-sm">
+                  <Card className="border border-white/60 bg-white/70 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] rounded-[2rem] backdrop-blur-md overflow-hidden">
                     <CardContent className="p-0">
                       <button
                         type="button"
@@ -701,7 +712,7 @@ export default function JobDescriptionsPage() {
                           <Badge className="rounded-full border border-slate-200 bg-slate-50 text-slate-600">
                             {form.education_requirements.length}
                           </Badge>
-                          <ChevronDown
+                          <CaretDown
                             className={cn(
                               "h-4 w-4 text-slate-400 transition-transform duration-200",
                               expandedSections.education && "rotate-180"
@@ -716,15 +727,15 @@ export default function JobDescriptionsPage() {
                               value={newEdu.level}
                               onChange={(event) => setNewEdu({ ...newEdu, level: event.target.value })}
                               placeholder="Bachelor's"
-                              className="h-11 rounded-xl"
+                              className="!h-12 rounded-xl"
                             />
                             <Input
                               value={newEdu.field}
                               onChange={(event) => setNewEdu({ ...newEdu, field: event.target.value })}
                               placeholder="Computer Science"
-                              className="h-11 rounded-xl"
+                              className="!h-12 rounded-xl"
                             />
-                            <Button onClick={addEducation} className="rounded-xl px-4">
+                            <Button onClick={addEducation} className="h-12 rounded-xl px-6 text-sm font-medium shadow-sm">
                               Add
                             </Button>
                           </div>
@@ -766,7 +777,7 @@ export default function JobDescriptionsPage() {
                     </CardContent>
                   </Card>
 
-                  <Card className="border border-slate-200/80 bg-white shadow-sm">
+                  <Card className="border border-white/60 bg-white/70 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] rounded-[2rem] backdrop-blur-md overflow-hidden">
                     <CardContent className="p-0">
                       <button
                         type="button"
@@ -775,7 +786,7 @@ export default function JobDescriptionsPage() {
                       >
                         <div>
                           <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                            <Award className="h-4 w-4 text-amber-600" />
+                            <Medal className="h-4 w-4 text-amber-600" />
                             Certifications
                           </p>
                           <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -786,7 +797,7 @@ export default function JobDescriptionsPage() {
                           <Badge className="rounded-full border border-slate-200 bg-slate-50 text-slate-600">
                             {form.certifications.length}
                           </Badge>
-                          <ChevronDown
+                          <CaretDown
                             className={cn(
                               "h-4 w-4 text-slate-400 transition-transform duration-200",
                               expandedSections.certifications && "rotate-180"
@@ -804,7 +815,7 @@ export default function JobDescriptionsPage() {
                               onKeyDown={(event) => event.key === "Enter" && addCertification()}
                               className="h-11 rounded-xl"
                             />
-                            <Button onClick={addCertification} className="rounded-xl px-4 sm:self-start">
+                            <Button onClick={addCertification} className="h-11 rounded-xl px-6 sm:self-start text-sm font-medium shadow-sm">
                               Add
                             </Button>
                           </div>
@@ -842,98 +853,105 @@ export default function JobDescriptionsPage() {
           </div>
 
           <DialogFooter className="gap-3 border-t border-slate-200 bg-white/95 px-6 py-4 md:px-8">
-            <DialogClose render={<Button variant="outline" className="rounded-xl border-slate-200 px-5" />}>
+            <DialogClose render={<Button variant="outline" className="h-11 rounded-xl border-slate-200 px-6 text-sm font-medium shadow-sm" />}>
               Cancel
             </DialogClose>
-            <Button
+            <button
               onClick={handleSave}
               disabled={!form.title.trim()}
-              className="rounded-xl gradient-blue px-5 text-white shadow-lg shadow-sky-200"
+              className="premium-button flex h-11 items-center justify-center px-8 text-sm font-medium shadow-sm"
             >
               {editingId ? "Save changes" : "Create job description"}
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {loading ? (
-        <div className="py-16 text-center text-slate-400">Loading job descriptions...</div>
+        <div className="py-24 text-center text-muted-foreground font-mono text-sm">Loading job descriptions...</div>
       ) : jds.length === 0 ? (
-        <Card className="border-0 shadow-md">
-          <CardContent className="py-16 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
-              <FileText className="h-7 w-7 text-slate-300" />
-            </div>
-            <p className="text-slate-500">No job descriptions yet. Create one to start screening candidates.</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants} className="glass-panel py-24 text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/50 shadow-sm border border-white/60">
+            <FileText className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground">No job descriptions yet. Create one to start screening candidates.</p>
+        </motion.div>
       ) : (
-        <div className="grid gap-5 xl:grid-cols-2">
+        <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid gap-6 xl:grid-cols-2">
+          <AnimatePresence>
           {jds.map((jd) => (
-            <Card
+            <motion.div
+              layout
+              layoutId={`jd-${jd.id}`}
+              variants={itemVariants}
               key={jd.id}
-              className="border border-sky-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+              className="glass-panel group p-6 sm:p-8"
             >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-sm font-bold text-sky-700">
-                      {jd.title.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="truncate text-lg font-semibold text-slate-900">{jd.title}</h3>
-                      <p className="truncate text-sm text-slate-500">{jd.department || "No department set"}</p>
-                    </div>
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 items-center gap-5">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground shadow-md transition-transform group-hover:scale-110">
+                    {jd.title.charAt(0).toUpperCase()}
                   </div>
-
-                  <div className="flex shrink-0 items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(jd)} className="h-9 w-9 rounded-xl p-0">
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(jd.id)} className="h-9 w-9 rounded-xl p-0 text-red-500">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <div className="min-w-0">
+                    <h3 className="truncate font-heading text-xl font-semibold text-foreground">{jd.title}</h3>
+                    <p className="truncate text-sm text-muted-foreground mt-1">{jd.department || "No department set"}</p>
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                    <p className="text-xs text-slate-500">Experience</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">
-                      {jd.experience_level} - {jd.min_experience_years}+ yrs
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                    <p className="text-xs text-slate-500">Skills</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">{jd.required_skills?.length || 0} items</p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                    <p className="text-xs text-slate-500">Certifications</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">{jd.certifications?.length || 0} items</p>
-                  </div>
+                <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
+                  <button
+                    onClick={() => handleEdit(jd)}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 bg-white/50 text-muted-foreground shadow-sm transition hover:bg-white hover:text-primary hover:shadow-md hover:-translate-y-1"
+                  >
+                    <PencilSimple className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(jd.id)}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 bg-white/50 text-muted-foreground shadow-sm transition hover:bg-white hover:text-destructive hover:shadow-md hover:-translate-y-1"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </button>
                 </div>
+              </div>
 
-                <p className="mt-4 line-clamp-3 text-sm leading-7 text-slate-600">
-                  {jd.description || "No description entered yet."}
-                </p>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {(jd.required_skills || []).slice(0, 5).map((skill, index) => (
-                    <Badge key={`${jd.id}-skill-${index}`} className="rounded-full border-0 bg-sky-50 text-sky-700">
-                      {skill.name}
-                    </Badge>
-                  ))}
-                  {(jd.required_skills || []).length > 5 ? (
-                    <Badge className="rounded-full border-0 bg-slate-100 text-slate-700">
-                      +{(jd.required_skills || []).length - 5} more
-                    </Badge>
-                  ) : null}
+              <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-xl border border-white/50 bg-white/40 px-5 py-4 shadow-sm">
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Experience</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">
+                    {jd.experience_level} - {jd.min_experience_years}+ yrs
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="rounded-xl border border-white/50 bg-white/40 px-5 py-4 shadow-sm">
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Skills</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">{jd.required_skills?.length || 0} items</p>
+                </div>
+                <div className="rounded-xl border border-white/50 bg-white/40 px-5 py-4 shadow-sm">
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Certifications</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">{jd.certifications?.length || 0} items</p>
+                </div>
+              </div>
+
+              <p className="mt-6 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                {jd.description || "No description entered yet."}
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-2">
+                {(jd.required_skills || []).slice(0, 5).map((skill, index) => (
+                  <Badge key={`${jd.id}-skill-${index}`} className="badge-pale-blue rounded-md border-0">
+                    {skill.name}
+                  </Badge>
+                ))}
+                {(jd.required_skills || []).length > 5 ? (
+                  <Badge className="rounded-md border border-white/60 bg-white/50 text-muted-foreground shadow-sm">
+                    +{(jd.required_skills || []).length - 5} more
+                  </Badge>
+                ) : null}
+              </div>
+            </motion.div>
           ))}
-        </div>
+          </AnimatePresence>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

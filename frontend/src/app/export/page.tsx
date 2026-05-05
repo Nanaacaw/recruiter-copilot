@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { Download, FileText, FileSpreadsheet, Loader2, CloudDownload, Sparkles } from "lucide-react";
+import { DownloadSimple, FileText, FileXls, SpinnerGap, CloudArrowDown, Sparkle } from "@phosphor-icons/react";
 import type { JobDescription, Screening } from "@/types";
 
 export default function ExportPage() {
@@ -45,28 +45,42 @@ export default function ExportPage() {
     try { await api.exportExcel(selectedJd); } catch (err: unknown) { alert(getErrorMessage(err, "Export Excel failed")); } finally { setExporting(null); }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 100, damping: 20 } },
+  };
+
   return (
-    <div className="page-shell space-y-6 sm:space-y-8">
-      <section className="hero-mesh soft-panel overflow-hidden rounded-[1.5rem] border-0 sm:rounded-[2rem]">
-        <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[1.2fr_0.8fr] lg:p-8">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
-              <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+    <motion.div initial="hidden" animate="show" variants={containerVariants} className="page-shell space-y-12 sm:space-y-16">
+      <motion.section variants={itemVariants} className="glass-panel relative overflow-hidden">
+        <div className="absolute top-0 right-0 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-md bg-secondary px-2.5 py-1 text-[11px] uppercase tracking-widest text-muted-foreground font-mono">
+              <Sparkle className="h-3.5 w-3.5 text-foreground" weight="fill" />
               Export center
             </div>
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl md:text-4xl">
+              <h1 className="font-heading text-4xl tracking-tighter text-foreground sm:text-5xl md:text-6xl leading-[1.1]">
                 Download recruiter-ready reports without digging through screening history one by one.
               </h1>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
+              <p className="mt-6 max-w-3xl text-base leading-relaxed text-muted-foreground">
                 Pick a role, export the full shortlist in Excel, or download individual PDF reports for candidate-by-candidate review.
               </p>
             </div>
-            <div className="max-w-xl space-y-2">
-              <p className="text-sm font-medium text-slate-600">Select job description</p>
+            <div className="max-w-xl space-y-3">
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Select job description</p>
               <Select value={selectedJd} onValueChange={(v) => v && setSelectedJd(v)}>
-                <SelectTrigger className="h-12 w-full rounded-2xl border-sky-100 bg-white/90">
-                  <SelectValue placeholder="Choose a position..." className="min-w-0 truncate">
+                <SelectTrigger className="h-14 w-full rounded-xl border-white/50 bg-white/50 shadow-sm">
+                  <SelectValue placeholder="Choose a position..." className="min-w-0 truncate text-base">
                     {selectedJobLabel}
                   </SelectValue>
                 </SelectTrigger>
@@ -81,108 +95,106 @@ export default function ExportPage() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <Card className="sky-card rounded-[1.75rem] border-0">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Export volume</p>
-                    <p className="mt-2 text-4xl font-semibold text-slate-900">{selectedJd ? screenings.length : 0}</p>
-                  </div>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-300 to-blue-500 shadow-lg shadow-sky-200">
-                    <CloudDownload className="h-6 w-6 text-white" />
-                  </div>
-                </div>
-                <p className="mt-3 text-sm leading-7 text-slate-500">
-                  {selectedJob ? `Stored results available for ${selectedJob.title}.` : "Pick a role to unlock export actions."}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="soft-panel rounded-[1.75rem] border-0">
-              <CardContent className="p-4 sm:p-6">
-                <p className="text-sm font-semibold text-slate-900">Export options</p>
-                <div className="mt-4 space-y-3">
-                  <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Excel batch</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">Best for recruiter handoff and shortlist review</p>
-                  </div>
-                  <div className="rounded-2xl border border-sky-100 bg-white/88 px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Candidate PDF</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">Best for one-candidate review packets</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {selectedJd && screenings.length > 0 ? (
-        <Card className="soft-panel border-0 overflow-hidden">
-          <div className="h-1 gradient-green" />
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                  <FileSpreadsheet className="h-5 w-5" />
-                </div>
+          <div className="space-y-6">
+            <div className="rounded-2xl border border-white/50 bg-white/40 p-6 flex flex-col justify-between shadow-sm">
+              <div className="flex items-center justify-between gap-4 mb-4">
                 <div>
-                  <h3 className="font-semibold text-slate-900">Batch export</h3>
-                  <p className="text-sm text-slate-400">{screenings.length} candidates</p>
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Export volume</p>
+                  <p className="mt-4 font-heading text-5xl font-semibold text-foreground">{selectedJd ? screenings.length : 0}</p>
+                </div>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+                  <CloudArrowDown className="h-7 w-7" />
                 </div>
               </div>
-              <Button onClick={handleExportBatch} disabled={exporting === "batch"} className="h-11 w-full gap-2 rounded-2xl gradient-green border-0 text-white shadow-lg shadow-emerald-200 sm:w-auto">
-                {exporting === "batch" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileSpreadsheet className="h-4 w-4" />}
-                Export Excel
-              </Button>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                {selectedJob ? `Stored results available for ${selectedJob.title}.` : "Pick a role to unlock export actions."}
+              </p>
             </div>
-          </CardContent>
-        </Card>
+
+            <div className="rounded-2xl border border-white/50 bg-white/40 p-6 shadow-sm">
+              <p className="font-heading text-xl font-semibold text-foreground">Export options</p>
+              <div className="mt-5 space-y-4">
+                <div className="rounded-xl border border-white/50 bg-white/50 px-5 py-4 shadow-sm">
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Excel batch</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">Best for recruiter handoff and shortlist review</p>
+                </div>
+                <div className="rounded-xl border border-white/50 bg-white/50 px-5 py-4 shadow-sm">
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Candidate PDF</p>
+                  <p className="mt-2 text-sm font-medium text-foreground">Best for one-candidate review packets</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      {selectedJd && screenings.length > 0 ? (
+        <motion.div variants={itemVariants} className="glass-panel border-primary/30 ring-2 ring-primary/20 bg-primary/5">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-5">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
+                <FileXls className="h-7 w-7" />
+              </div>
+              <div>
+                <h3 className="font-heading text-2xl font-semibold text-foreground">Batch export</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{screenings.length} candidates</p>
+              </div>
+            </div>
+            <button 
+              onClick={handleExportBatch} 
+              disabled={exporting === "batch"} 
+              className="premium-button h-12 w-full flex items-center justify-center gap-2 px-6 sm:w-auto"
+            >
+              {exporting === "batch" ? <SpinnerGap className="h-4 w-4 animate-spin" /> : <FileXls className="h-4 w-4" />}
+              Export Excel
+            </button>
+          </div>
+        </motion.div>
       ) : null}
 
       {selectedJd && screenings.length === 0 ? (
-        <Card className="border-0 shadow-md">
-          <CardContent className="py-16 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
-              <FileText className="h-7 w-7 text-slate-300" />
-            </div>
-            <p className="text-slate-500">No screening results for this position yet.</p>
-          </CardContent>
-        </Card>
+        <motion.div variants={itemVariants} className="glass-panel py-24 text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/50 shadow-sm border border-white/60">
+            <FileText className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground">No screening results for this position yet.</p>
+        </motion.div>
       ) : (
-        <div className="space-y-4">
+        <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-6">
+          <AnimatePresence>
           {screenings.sort((a, b) => b.overall_score - a.overall_score).map((s, idx) => {
-            const scoreColor = s.overall_score >= 75 ? "text-emerald-600" : s.overall_score >= 50 ? "text-amber-600" : "text-red-600";
             return (
-              <Card key={s.id} className="soft-panel border-0 transition-all hover:shadow-md">
-                <CardContent className="p-4 sm:p-5">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex min-w-0 items-center gap-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-cyan-400 text-xs font-bold text-white">
-                        {idx + 1}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-slate-900">{s.candidate?.name}</p>
-                        <p className="truncate text-sm text-slate-400">{s.candidate?.email}</p>
-                      </div>
+              <motion.div layout layoutId={`export-${s.id}`} variants={itemVariants} key={s.id} className="glass-panel group">
+                <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-5">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/50 border border-white/60 font-mono text-lg font-bold text-foreground shadow-sm">
+                      {idx + 1}
                     </div>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                      <Badge className={`rounded-full border-0 bg-white px-3 py-1.5 ${scoreColor}`}>
-                        Score {s.overall_score.toFixed(0)}
-                      </Badge>
-                      <Button variant="outline" size="sm" onClick={() => handleExportPdf(s.id)} disabled={exporting === "pdf-" + s.id} className="h-10 w-full gap-2 rounded-xl border-sky-100 bg-white/88 sm:w-auto">
-                        {exporting === "pdf-" + s.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                        Export PDF
-                      </Button>
+                    <div className="min-w-0">
+                      <p className="truncate font-heading text-xl font-semibold text-foreground">{s.candidate?.name}</p>
+                      <p className="truncate text-sm text-muted-foreground mt-1">{s.candidate?.email}</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <Badge className="badge-pale-blue rounded-md border-0 px-3 py-1.5 font-mono text-[10px] uppercase shadow-sm">
+                      Score {s.overall_score.toFixed(0)}
+                    </Badge>
+                    <button 
+                      onClick={() => handleExportPdf(s.id)} 
+                      disabled={exporting === "pdf-" + s.id} 
+                      className="minimal-button h-12 w-full flex items-center justify-center gap-2 px-6 sm:w-auto"
+                    >
+                      {exporting === "pdf-" + s.id ? <SpinnerGap className="h-4 w-4 animate-spin" /> : <DownloadSimple className="h-4 w-4" />}
+                      Export PDF
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
             );
           })}
-        </div>
+          </AnimatePresence>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
