@@ -224,7 +224,7 @@ def create_screening(data: ScreeningCreate, background_tasks: BackgroundTasks, d
 def get_screenings_for_jd(jd_id: str, db: Session = Depends(get_db)):
     # Auto-reset screenings stuck in "pending" for more than 5 minutes
     from datetime import datetime, timedelta, timezone
-    stale_threshold = datetime.now(timezone.utc) - timedelta(minutes=5)
+    stale_threshold = datetime.now(timezone.utc) - timedelta(minutes=30)
     stale_pending = (
         db.query(Screening)
         .filter(
