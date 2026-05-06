@@ -92,6 +92,7 @@ def _apply_screening_result(screening: Screening, ai_result: dict, weights: dict
 
 def _process_screening_bg(screening_ids: list[str], jd_data: dict) -> None:
     """Background task: runs AI for each pending screening, one at a time."""
+    logger.info("Background task started for %d screenings", len(screening_ids))
     db = SessionLocal()
     try:
         processed_count = 0
@@ -102,6 +103,7 @@ def _process_screening_bg(screening_ids: list[str], jd_data: dict) -> None:
 
             candidate = screening.candidate
             if not candidate:
+                logger.warning("Candidate not found for screening %s", screening_id)
                 screening.status = "failed"
                 screening.error_message = "Candidate not found in database"
                 db.commit()
@@ -137,6 +139,9 @@ def _process_screening_bg(screening_ids: list[str], jd_data: dict) -> None:
                 screening.error_message = f"AI screening failed: {exc}"
 
             db.commit()
+        logger.info("Background task completed. Processed %d screenings", processed_count)
+    except Exception as e:
+        logger.exception("Background task crashed: %s", e)
     finally:
         db.close()
 
