@@ -222,6 +222,24 @@ def create_screening(data: ScreeningCreate, background_tasks: BackgroundTasks, d
 
 @router.get("/{jd_id}", response_model=list[ScreeningResponse])
 def get_screenings_for_jd(jd_id: str, db: Session = Depends(get_db)):
+    # Auto-reset screenings stuck in "pending" for more than 5 minutes
+    from datetime import datetime, timedelta, timezone
+    stale_threshold = datetime.now(timezone.utc) - timedelta(minutes=5)
+    stale_pending = (
+        db.query(Screening)
+        .filter(
+            Screening.job_description_id == jd_id,
+            Screening.status == "pending",
+            Screening.screening_date < stale_threshold,
+        )
+        .all()
+    )
+    if stale_pending:
+        for s in stale_pending:
+            s.status = "failed"
+            s.error_message = "Processing timed out — please try again"
+        db.commit()
+
     return (
         db.query(Screening)
         .filter(Screening.job_description_id == jd_id)
