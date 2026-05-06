@@ -46,6 +46,8 @@ class Screening(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     candidate_id = Column(String, ForeignKey("candidates.id", ondelete="CASCADE"), nullable=False)
     job_description_id = Column(String, ForeignKey("job_descriptions.id", ondelete="CASCADE"), nullable=False)
+    status = Column(String(50), default="pending")
+    error_message = Column(Text, nullable=True)
     overall_score = Column(Float, default=0.0)
     skills_score = Column(Float, default=0.0)
     experience_score = Column(Float, default=0.0)
@@ -57,6 +59,7 @@ class Screening(Base):
     red_flags = Column(JSON, default=list)
     matched_skills = Column(JSON, default=list)
     missing_skills = Column(JSON, default=list)
+    processing_time_seconds = Column(Float, nullable=True)
     screening_date = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     candidate = relationship("Candidate", back_populates="screenings")

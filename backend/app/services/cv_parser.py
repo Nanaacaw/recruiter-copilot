@@ -42,7 +42,7 @@ class CVParserService:
         with fitz.open(file_path) as doc:
             for page in doc:
                 text += page.get_text()
-        return text
+        return self._normalize_whitespace(text)
 
     def _parse_docx(self, file_path: str) -> str:
         doc = Document(file_path)
@@ -54,7 +54,13 @@ class CVParserService:
                 for cell in row.cells:
                     text += cell.text + " "
                 text += "\n"
-        return text
+        return self._normalize_whitespace(text)
+
+    def _normalize_whitespace(self, text: str) -> str:
+        """Collapse 3+ consecutive blank lines to a single blank line."""
+        text = re.sub(r"[ \t]+\n", "\n", text)
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        return text.strip()
 
     def _extract_structured_data(self, text: str) -> dict:
         lines = self._normalize_lines(text)
@@ -87,7 +93,7 @@ class CVParserService:
         return match.group(0).strip(".,;:()[]{}<>") if match else ""
 
     def _extract_phone(self, lines: list[str], email: str) -> str:
-        searchable_lines = lines[:25] if lines else []
+        searchable_lines = lines[:35] if lines else []
 
         for line in searchable_lines:
             clean_line = line.replace(email, " ") if email else line
@@ -95,8 +101,13 @@ class CVParserService:
             clean_line = re.sub(r"(?<=\d)\s*\?\s*(?=\d)", "-", clean_line)
             clean_line = re.sub(r"(?<=\d)\s*-\s*(?=\d)", "-", clean_line)
             clean_line = re.sub(r"(?<=\d)\s*\.\s*(?=\d)", "-", clean_line)
-            if self._looks_like_link_or_id_line(clean_line):
-                continue
+
+            clean_line = re.sub(
+                r"\S*(?:linkedin|github|http|www\.|portfolio)\S*",
+                " ",
+                clean_line,
+                flags=re.IGNORECASE,
+            )
 
             for match in PHONE_PATTERN.finditer(clean_line):
                 candidate = match.group(0).strip(".,;:()[]{}<> ")

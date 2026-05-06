@@ -2,18 +2,23 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.database import engine, Base, run_startup_migrations
+from app.core.database import engine, Base
+from sqlalchemy import text
 from app.core.security import anti_spam_middleware, auth_middleware
 from app.api.v1 import api_router
 
 Base.metadata.create_all(bind=engine)
-run_startup_migrations()
+
+with engine.begin() as _conn:
+    _conn.execute(text("ALTER TABLE screenings ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending'"))
+    _conn.execute(text("ALTER TABLE screenings ADD COLUMN IF NOT EXISTS error_message TEXT"))
+    _conn.execute(text("ALTER TABLE screenings ADD COLUMN IF NOT EXISTS processing_time_seconds FLOAT"))
 
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
 )
 
 app.add_middleware(

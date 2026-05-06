@@ -1,20 +1,26 @@
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from sqlalchemy.orm import Session
 import uuid
 import time
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-
 from app.core.config import settings
-from app.core.database import get_db
+from app.core.database import get_db, SessionLocal
 from app.models.models import Screening, Candidate, JobDescription
 from app.schemas import ScreeningCreate, ScreeningResponse, ScreeningDetailResponse, CompareRequest
 from app.services.ai_service import ai_service
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/screening", tags=["Screening"])
 
 
 def _screening_failed(screening: Screening) -> bool:
+    """Return True if the screening result is unusable and should be re-run."""
+    if screening.status == "failed":
+        return True
+
     all_zero = (
         screening.overall_score <= 0
         and screening.skills_score <= 0
@@ -25,40 +31,33 @@ def _screening_failed(screening: Screening) -> bool:
         return True
 
     ai_analysis = screening.ai_analysis or {}
-    summary = ""
-    if isinstance(ai_analysis, dict):
-        summary = str(ai_analysis.get("summary", "")).lower()
-
+    summary = str(ai_analysis.get("summary", "")).lower() if isinstance(ai_analysis, dict) else ""
     weaknesses = screening.weaknesses or []
     weakness_text = " ".join(str(item).lower() for item in weaknesses)
 
-    return (
-        screening.overall_score <= 0
-        and (
-            "ai screening failed" in summary
-            or "ai error" in weakness_text
-            or "ai provider error" in weakness_text
-            or "quota exceeded" in weakness_text
-            or "429" in weakness_text
-            or "invalid json" in weakness_text
-        )
+    error_keywords = (
+        "ai screening failed",
+        "ai error",
+        "ai provider error",
+        "quota exceeded",
+        "429",
+        "invalid json",
+        "no choices returned",
+        "no response",
+        "empty model response",
     )
+    return any(kw in summary or kw in weakness_text for kw in error_keywords)
 
 
 def _screening_provider_mismatch(screening: Screening) -> bool:
     ai_analysis = screening.ai_analysis or {}
     if not isinstance(ai_analysis, dict):
         return False
-
     meta = ai_analysis.get("_meta")
     if not isinstance(meta, dict):
         return False
-
     current = ai_service.provider_metadata()
-    return (
-        meta.get("provider") != current.get("provider")
-        or meta.get("model") != current.get("model")
-    )
+    return meta.get("provider") != current.get("provider") or meta.get("model") != current.get("model")
 
 
 def _apply_screening_result(screening: Screening, ai_result: dict, weights: dict) -> Screening:
@@ -91,8 +90,59 @@ def _apply_screening_result(screening: Screening, ai_result: dict, weights: dict
     return screening
 
 
+def _process_screening_bg(screening_ids: list[str], jd_data: dict) -> None:
+    """Background task: runs AI for each pending screening, one at a time."""
+    db = SessionLocal()
+    try:
+        processed_count = 0
+        for screening_id in screening_ids:
+            screening = db.query(Screening).filter(Screening.id == screening_id).first()
+            if not screening or screening.status != "pending":
+                continue
+
+            candidate = screening.candidate
+            if not candidate:
+                screening.status = "failed"
+                screening.error_message = "Candidate not found in database"
+                db.commit()
+                continue
+
+            try:
+                if processed_count > 0 and settings.AI_SCREENING_DELAY_SECONDS > 0:
+                    time.sleep(settings.AI_SCREENING_DELAY_SECONDS)
+
+                logger.info("Screening candidate '%s' (id=%s)", candidate.name, candidate.id)
+                t_start = time.monotonic()
+                ai_result = ai_service.screen_cv(candidate.parsed_data or {}, jd_data)
+                elapsed = round(time.monotonic() - t_start, 1)
+
+                ai_weaknesses = ai_result.get("weaknesses") or []
+                error_hint = next(
+                    (str(w) for w in ai_weaknesses if str(w).lower().startswith("ai error:")),
+                    None,
+                )
+                if error_hint:
+                    raise ValueError(error_hint)
+
+                weights = jd_data.get("criteria_weights", {})
+                _apply_screening_result(screening, ai_result, weights)
+                screening.status = "completed"
+                screening.error_message = None
+                screening.processing_time_seconds = elapsed
+                processed_count += 1
+                logger.info("Screening completed for '%s' — score %.1f in %.1fs", candidate.name, screening.overall_score, elapsed)
+            except Exception as exc:
+                logger.exception("AI screening failed for candidate '%s': %s", candidate.name, exc)
+                screening.status = "failed"
+                screening.error_message = f"AI screening failed: {exc}"
+
+            db.commit()
+    finally:
+        db.close()
+
+
 @router.post("", response_model=list[ScreeningResponse], status_code=201)
-def create_screening(data: ScreeningCreate, db: Session = Depends(get_db)):
+def create_screening(data: ScreeningCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     jd = db.query(JobDescription).filter(JobDescription.id == data.job_description_id).first()
     if not jd:
         raise HTTPException(status_code=404, detail="Job description not found")
@@ -105,8 +155,6 @@ def create_screening(data: ScreeningCreate, db: Session = Depends(get_db)):
     if missing_ids:
         raise HTTPException(status_code=404, detail=f"Candidates not found: {', '.join(missing_ids)}")
 
-    results = []
-    processed_count = 0
     jd_data = {
         "title": jd.title,
         "department": jd.department,
@@ -119,6 +167,9 @@ def create_screening(data: ScreeningCreate, db: Session = Depends(get_db)):
         "criteria_weights": jd.criteria_weights or {},
     }
 
+    results = []
+    pending_ids = []
+
     for candidate_id in data.candidate_ids:
         candidate = candidate_map[candidate_id]
 
@@ -127,11 +178,11 @@ def create_screening(data: ScreeningCreate, db: Session = Depends(get_db)):
             .filter(Screening.candidate_id == candidate_id, Screening.job_description_id == data.job_description_id)
             .first()
         )
-        should_refresh_existing = bool(existing) and (
+        should_refresh = bool(existing) and (
             _screening_failed(existing) or _screening_provider_mismatch(existing)
         )
 
-        if existing and not should_refresh_existing:
+        if existing and not should_refresh:
             results.append(existing)
             continue
 
@@ -140,33 +191,32 @@ def create_screening(data: ScreeningCreate, db: Session = Depends(get_db)):
         if not raw_text or not raw_text.strip():
             raise HTTPException(
                 status_code=422,
-                detail=f"CV for '{candidate.name}' has no extractable text. The file may be a scanned image. Please re-upload a text-based PDF or DOCX."
+                detail=f"CV for '{candidate.name}' has no extractable text. Please re-upload a text-based PDF or DOCX.",
             )
 
-        try:
-            if processed_count > 0 and settings.AI_SCREENING_DELAY_SECONDS > 0:
-                time.sleep(settings.AI_SCREENING_DELAY_SECONDS)
-            ai_result = ai_service.screen_cv(candidate.parsed_data or {}, jd_data)
-            processed_count += 1
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"AI screening failed for {candidate.name}: {str(e)}")
-
-        weights = jd_data.get("criteria_weights", {})
         if existing:
-            screening = _apply_screening_result(existing, ai_result, weights)
+            existing.status = "pending"
+            existing.error_message = None
+            screening = existing
         else:
             screening = Screening(
                 id=str(uuid.uuid4()),
                 candidate_id=candidate_id,
                 job_description_id=data.job_description_id,
+                status="pending",
             )
-            _apply_screening_result(screening, ai_result, weights)
             db.add(screening)
+
         results.append(screening)
+        pending_ids.append(screening.id)
 
     db.commit()
     for r in results:
         db.refresh(r)
+
+    if pending_ids:
+        background_tasks.add_task(_process_screening_bg, pending_ids, jd_data)
+
     return results
 
 

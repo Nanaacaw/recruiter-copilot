@@ -4,63 +4,81 @@ SHELL := powershell.exe
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup setup-backend setup-frontend dev public backend frontend frontend-prod lint tunnel-up tunnel-down tunnel-logs status health
+.PHONY: help dev setup setup-backend setup-frontend lint \
+        docker-up docker-down docker-build docker-logs docker-ps \
+        tunnel-up tunnel-down tunnel-logs health
 
 help:
->@Write-Host "AI Screening Copilot shortcuts:" -ForegroundColor Cyan
->@Write-Host "  make setup           Install backend + frontend dependencies"
->@Write-Host "  make dev             Run local dev stack (start.bat)"
->@Write-Host "  make public          Run public-safe stack (start-public.bat)"
->@Write-Host "  make backend         Run FastAPI only (localhost:8000)"
->@Write-Host "  make frontend        Run Next.js dev only (localhost:3000)"
->@Write-Host "  make frontend-prod   Build + start Next.js production mode"
->@Write-Host "  make lint            Run frontend lint"
->@Write-Host "  make tunnel-up       Start Cloudflare connector via docker compose"
->@Write-Host "  make tunnel-down     Stop Cloudflare connector"
->@Write-Host "  make tunnel-logs     Follow cloudflared logs"
->@Write-Host "  make status          Show docker compose services"
->@Write-Host "  make health          Quick local health checks"
+> @Write-Host "AI Screening Copilot shortcuts:" -ForegroundColor Cyan
+> @Write-Host ""
+> @Write-Host "  --- Local Dev (no Docker) ---"
+> @Write-Host "  make setup            Install backend + frontend dependencies"
+> @Write-Host "  make dev              Run backend + frontend locally (separate terminals)"
+> @Write-Host "  make lint             Run frontend ESLint"
+> @Write-Host ""
+> @Write-Host "  --- Docker (Production) ---"
+> @Write-Host "  make docker-build     Build all Docker images"
+> @Write-Host "  make docker-up        Start all services (db, backend, frontend, cloudflared)"
+> @Write-Host "  make docker-down      Stop and remove all containers"
+> @Write-Host "  make docker-logs      Follow logs for all services"
+> @Write-Host "  make docker-ps        Show running containers"
+> @Write-Host ""
+> @Write-Host "  --- Tunnel ---"
+> @Write-Host "  make tunnel-up        Start only cloudflared"
+> @Write-Host "  make tunnel-down      Stop cloudflared"
+> @Write-Host "  make tunnel-logs      Follow cloudflared logs"
+> @Write-Host ""
+> @Write-Host "  make health           Quick local health check"
+
+# ── Local Dev ─────────────────────────────────────────────────────────────────
 
 setup: setup-backend setup-frontend
 
 setup-backend:
->@if (!(Test-Path "backend/venv")) { python -m venv backend/venv }
->@& "backend/venv/Scripts/python.exe" -m pip install --upgrade pip
->@& "backend/venv/Scripts/python.exe" -m pip install -r backend/requirements.txt
+> @if (!(Test-Path "backend/venv")) { python -m venv backend/venv }
+> @& "backend/venv/Scripts/python.exe" -m pip install --upgrade pip
+> @& "backend/venv/Scripts/python.exe" -m pip install -r backend/requirements.txt
 
 setup-frontend:
->@Set-Location frontend; npm install
+> @Set-Location frontend; npm install
 
 dev:
->@.\start.bat
-
-public:
->@.\start-public.bat
-
-backend:
->@Set-Location backend; .\venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --reload --port 8000
-
-frontend:
->@Set-Location frontend; npm run dev -- --hostname 0.0.0.0 --port 3000
-
-frontend-prod:
->@Set-Location frontend; npm run build; npm run start -- --hostname 0.0.0.0 --port 3000
+> @Write-Host "Start backend: cd backend && venv\Scripts\python -m uvicorn app.main:app --reload --port 8000" -ForegroundColor Yellow
+> @Write-Host "Start frontend: cd frontend && npm run dev" -ForegroundColor Yellow
 
 lint:
->@Set-Location frontend; npm run lint
+> @Set-Location frontend; npm run lint
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+
+docker-build:
+> @docker compose build
+
+docker-up:
+> @docker compose up -d
+
+docker-down:
+> @docker compose down
+
+docker-logs:
+> @docker compose logs -f --tail=200
+
+docker-ps:
+> @docker compose ps
+
+# ── Tunnel ────────────────────────────────────────────────────────────────────
 
 tunnel-up:
->@docker compose up -d cloudflared
+> @docker compose up -d cloudflared
 
 tunnel-down:
->@docker compose stop cloudflared
+> @docker compose stop cloudflared
 
 tunnel-logs:
->@docker compose logs -f --tail=200 cloudflared
+> @docker compose logs -f --tail=200 cloudflared
 
-status:
->@docker compose ps
+# ── Health ────────────────────────────────────────────────────────────────────
 
 health:
->@curl.exe -sS http://localhost:8000/api/health
->@curl.exe -sS -o NUL -w "frontend http status: %{http_code}`n" http://localhost:3000
+> @curl.exe -sS http://localhost:8000/api/health
+> @curl.exe -sS -o NUL -w "frontend http status: %{http_code}`n" http://localhost:3000

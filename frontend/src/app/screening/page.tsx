@@ -24,6 +24,7 @@ import {
   Sparkle,
   Users,
   XCircle,
+  Lightning,
 } from "@phosphor-icons/react";
 
 function toErrorMessage(error: unknown): string {
@@ -159,6 +160,30 @@ export default function ScreeningPage() {
     };
   }, [selectedJd]);
 
+  useEffect(() => {
+    let ignore = false;
+    let intervalId: NodeJS.Timeout | null = null;
+
+    const hasPending = results.some((r) => r.status === "pending");
+    if (hasPending && selectedJd) {
+      intervalId = setInterval(async () => {
+        try {
+          const data = await api.getScreeningsForJd(selectedJd);
+          if (!ignore) {
+            setResults(data);
+          }
+        } catch {
+          // ignore
+        }
+      }, 3000);
+    }
+
+    return () => {
+      ignore = true;
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [selectedJd, results]);
+
   const handleScreen = async () => {
     if (!selectedJd || selectedCandidates.length === 0) return;
 
@@ -189,6 +214,7 @@ export default function ScreeningPage() {
   const selectedJob = jds.find((jd) => jd.id === selectedJd);
   const selectedCandidateCards = candidates.filter((candidate) => selectedCandidates.includes(candidate.id));
   const sortedResults = [...results].sort((a, b) => b.overall_score - a.overall_score);
+  const hasPending = results.some((r) => r.status === "pending");
   const selectedJobLabel = selectedJob
     ? `${selectedJob.title}${selectedJob.department ? ` - ${selectedJob.department}` : ""}`
     : undefined;
@@ -471,13 +497,13 @@ export default function ScreeningPage() {
 
             <button
               onClick={handleScreen}
-              disabled={!selectedJd || selectedCandidates.length === 0 || screening}
+              disabled={!selectedJd || selectedCandidates.length === 0 || screening || hasPending}
               className="premium-button mt-8 h-14 w-full flex items-center justify-center px-4"
             >
-              {screening ? (
+              {screening || hasPending ? (
                 <>
                   <SpinnerGap className="mr-2 h-4 w-4 animate-spin" />
-                  Screening in progress...
+                  {hasPending && !screening ? `Processing ${results.filter(r => r.status === "pending").length} CV...` : "Submitting..."}
                 </>
               ) : (
                 <>
@@ -577,136 +603,171 @@ export default function ScreeningPage() {
             {sortedResults.map((result, index) => (
               <motion.div layout layoutId={`result-${result.id}`} variants={itemVariants} key={result.id} className="rounded-[2.5rem] border border-white/60 bg-white/70 p-8 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] backdrop-blur-xl transition-all duration-300">
                 <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-4">
                       <Badge className="rounded-md border-0 bg-foreground text-background font-mono px-2 py-1 text-xs">Rank #{index + 1}</Badge>
                       <h3 className="font-heading text-3xl font-semibold text-foreground">
                         {result.candidate?.name || "Candidate"}
                       </h3>
                       <span className="text-sm text-muted-foreground">{result.candidate?.email || "No email detected"}</span>
+                      {result.status === "pending" && (
+                        <Badge className="badge-pale-yellow rounded-md border-0 font-mono text-[10px] uppercase ml-auto">
+                          <SpinnerGap className="mr-1 h-3.5 w-3.5 animate-spin" /> Processing
+                        </Badge>
+                      )}
+                      {result.status === "failed" && (
+                        <span className="rounded-md border border-rose-200 bg-rose-50 text-rose-700 font-mono px-2 py-1 text-[10px] uppercase ml-auto inline-flex items-center">
+                          <Warning className="mr-1 h-3.5 w-3.5" /> Failed
+                        </span>
+                      )}
+                      {result.status === "completed" && result.processing_time_seconds != null && (
+                        <span className="rounded-md border border-white/50 bg-white/40 text-muted-foreground font-mono px-2 py-1 text-[10px] ml-auto inline-flex items-center gap-1">
+                          <Lightning className="h-3 w-3" />
+                          {result.processing_time_seconds}s
+                        </span>
+                      )}
                     </div>
 
-                    <p className="mt-6 rounded-2xl border border-white/50 bg-white/40 px-6 py-5 text-sm leading-relaxed text-muted-foreground max-w-3xl shadow-inner">
-                      {result.ai_analysis.summary || "No AI summary stored for this result."}
-                    </p>
+                    {result.status === "failed" ? (
+                      <Alert className="mt-6 border border-rose-200 bg-rose-50 text-rose-900 rounded-2xl shadow-inner max-w-3xl">
+                        <Warning className="h-4 w-4" />
+                        <AlertTitle className="font-heading">Screening failed</AlertTitle>
+                        <AlertDescription className="text-sm">{result.error_message || "An unknown error occurred during AI processing."}</AlertDescription>
+                      </Alert>
+                    ) : result.status === "pending" ? (
+                      <div className="mt-6 rounded-2xl border border-dashed border-primary/20 bg-white/30 px-6 py-8 text-center max-w-3xl">
+                        <SpinnerGap className="mx-auto mb-3 h-6 w-6 animate-spin text-primary" />
+                        <p className="text-sm text-muted-foreground">AI is reading the CV and generating a response...</p>
+                      </div>
+                    ) : (
+                      <p className="mt-6 rounded-2xl border border-white/50 bg-white/40 px-6 py-5 text-sm leading-relaxed text-muted-foreground max-w-3xl shadow-inner">
+                        {result.ai_analysis?.summary || "No AI summary stored for this result."}
+                      </p>
+                    )}
                   </div>
 
-                  <div className="flex w-full items-center gap-5 rounded-2xl border border-white/50 bg-white/50 px-6 py-5 shadow-sm sm:w-auto">
-                    <div>
-                      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Overall score</p>
-                      <p className="mt-2 text-sm font-medium text-foreground">Screening fit</p>
+                  {(result.status === "completed" || !result.status) && (
+                    <div className="flex w-full items-center gap-5 rounded-2xl border border-white/50 bg-white/50 px-6 py-5 shadow-sm sm:w-auto">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-mono">Overall score</p>
+                        <p className="mt-2 text-sm font-medium text-foreground">Screening fit</p>
+                      </div>
+                      <ScoreCircle score={result.overall_score} />
                     </div>
-                    <ScoreCircle score={result.overall_score} />
-                  </div>
+                  )}
                 </div>
 
-                <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  {[
-                    { label: "Skills", score: result.skills_score },
-                    { label: "Experience", score: result.experience_score },
-                    { label: "Education", score: result.education_score },
-                    { label: "Certifications", score: result.certification_score },
-                  ].map((item) => (
-                    <div key={item.label} className="rounded-[2rem] border border-white/60 bg-white/70 p-8 shadow-sm">
-                      <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-mono font-semibold">{item.label}</p>
-                      <p className="mt-4 font-heading text-5xl font-bold text-slate-900">{item.score.toFixed(0)}</p>
-                      <div className="mt-6 h-2 overflow-hidden rounded-full bg-white/50">
-                        <div
-                          className="h-full rounded-full bg-primary"
-                          style={{ width: `${item.score}%` }}
-                        />
+                {(result.status === "completed" || !result.status) && (
+                  <>
+                    <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      {[
+                        { label: "Skills", score: result.skills_score },
+                        { label: "Experience", score: result.experience_score },
+                        { label: "Education", score: result.education_score },
+                        { label: "Certifications", score: result.certification_score },
+                      ].map((item) => (
+                        <div key={item.label} className="rounded-[2rem] border border-white/60 bg-white/70 p-8 shadow-sm">
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-mono font-semibold">{item.label}</p>
+                          <p className="mt-4 font-heading text-5xl font-bold text-slate-900">{item.score.toFixed(0)}</p>
+                          <div className="mt-6 h-2 overflow-hidden rounded-full bg-white/50">
+                            <div
+                              className="h-full rounded-full bg-primary"
+                              style={{ width: `${item.score}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-8 grid gap-6 xl:grid-cols-3">
+                      <div className="min-w-0 overflow-hidden rounded-[2rem] border border-emerald-200/50 bg-emerald-50/50 p-8 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+                        <p className="mb-6 flex items-center gap-3 font-heading text-xl font-bold text-emerald-800">
+                          <CheckCircle className="h-6 w-6" />
+                          Strengths
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {result.strengths?.length > 0 ? (
+                            result.strengths.slice(0, 4).map((item, itemIndex) => (
+                                <InsightTag key={`${result.id}-strength-${itemIndex}`} tone="emerald">
+                                  {item}
+                                </InsightTag>
+                              ))
+                          ) : (
+                            <p className="text-sm text-emerald-800/70 font-medium">No major strengths recorded.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="min-w-0 overflow-hidden rounded-[2rem] border border-amber-200/50 bg-amber-50/50 p-8 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+                        <p className="mb-6 flex items-center gap-3 font-heading text-xl font-bold text-amber-800">
+                          <Warning className="h-6 w-6" />
+                          Needs follow-up
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {result.weaknesses?.length > 0 ? (
+                            result.weaknesses.slice(0, 4).map((item, itemIndex) => (
+                                <InsightTag key={`${result.id}-weakness-${itemIndex}`} tone="amber">
+                                  {item}
+                                </InsightTag>
+                              ))
+                          ) : (
+                            <p className="text-sm text-amber-800/70 font-medium">No major weaknesses recorded.</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="min-w-0 overflow-hidden rounded-[2rem] border border-rose-200/50 bg-rose-50/50 p-8 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
+                        <p className="mb-6 flex items-center gap-3 font-heading text-xl font-bold text-rose-800">
+                          <Warning className="h-6 w-6" />
+                          Red flags
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {result.red_flags?.length > 0 ? (
+                            result.red_flags.slice(0, 4).map((item, itemIndex) => (
+                                <InsightTag key={`${result.id}-flag-${itemIndex}`} tone="rose">
+                                  {item}
+                                </InsightTag>
+                              ))
+                          ) : (
+                            <p className="text-sm text-rose-800/70 font-medium">No red flags recorded.</p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  ))}
-                </div>
 
-                <div className="mt-8 grid gap-6 xl:grid-cols-3">
-                  <div className="min-w-0 overflow-hidden rounded-[2rem] border border-emerald-200/50 bg-emerald-50/50 p-8 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
-                    <p className="mb-6 flex items-center gap-3 font-heading text-xl font-bold text-emerald-800">
-                      <CheckCircle className="h-6 w-6" />
-                      Strengths
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {result.strengths.length > 0 ? (
-                        result.strengths.slice(0, 4).map((item, itemIndex) => (
-                            <InsightTag key={`${result.id}-strength-${itemIndex}`} tone="emerald">
-                              {item}
-                            </InsightTag>
-                          ))
-                      ) : (
-                        <p className="text-sm text-emerald-800/70 font-medium">No major strengths recorded.</p>
-                      )}
-                    </div>
-                  </div>
+                    <div className="mt-8 grid gap-6 xl:grid-cols-2">
+                      <div className="rounded-2xl border border-white/50 bg-white/40 p-6 shadow-sm">
+                        <p className="font-heading text-sm font-semibold text-foreground">Matched skills</p>
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          {result.matched_skills?.length > 0 ? (
+                            result.matched_skills.slice(0, 6).map((item, itemIndex) => (
+                              <InsightTag key={`${result.id}-matched-${itemIndex}`} tone="cyan">
+                                {item}
+                              </InsightTag>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground">No matched skills stored.</p>
+                          )}
+                        </div>
+                      </div>
 
-                  <div className="min-w-0 overflow-hidden rounded-[2rem] border border-amber-200/50 bg-amber-50/50 p-8 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
-                    <p className="mb-6 flex items-center gap-3 font-heading text-xl font-bold text-amber-800">
-                      <Warning className="h-6 w-6" />
-                      Needs follow-up
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {result.weaknesses.length > 0 ? (
-                        result.weaknesses.slice(0, 4).map((item, itemIndex) => (
-                            <InsightTag key={`${result.id}-weakness-${itemIndex}`} tone="amber">
-                              {item}
-                            </InsightTag>
-                          ))
-                      ) : (
-                        <p className="text-sm text-amber-800/70 font-medium">No major weaknesses recorded.</p>
-                      )}
+                      <div className="rounded-2xl border border-white/50 bg-white/40 p-6 shadow-sm">
+                        <p className="font-heading text-sm font-semibold text-foreground">Missing skills</p>
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          {result.missing_skills?.length > 0 ? (
+                            result.missing_skills.slice(0, 6).map((item, itemIndex) => (
+                              <InsightTag key={`${result.id}-missing-${itemIndex}`} tone="slate">
+                                {item}
+                              </InsightTag>
+                            ))
+                          ) : (
+                            <p className="text-sm text-muted-foreground">No missing skills stored.</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="min-w-0 overflow-hidden rounded-[2rem] border border-rose-200/50 bg-rose-50/50 p-8 shadow-sm backdrop-blur-sm hover:shadow-md transition-shadow">
-                    <p className="mb-6 flex items-center gap-3 font-heading text-xl font-bold text-rose-800">
-                      <Warning className="h-6 w-6" />
-                      Red flags
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {result.red_flags.length > 0 ? (
-                        result.red_flags.slice(0, 4).map((item, itemIndex) => (
-                            <InsightTag key={`${result.id}-flag-${itemIndex}`} tone="rose">
-                              {item}
-                            </InsightTag>
-                          ))
-                      ) : (
-                        <p className="text-sm text-rose-800/70 font-medium">No red flags recorded.</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8 grid gap-6 xl:grid-cols-2">
-                  <div className="rounded-2xl border border-white/50 bg-white/40 p-6 shadow-sm">
-                    <p className="font-heading text-sm font-semibold text-foreground">Matched skills</p>
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      {result.matched_skills.length > 0 ? (
-                        result.matched_skills.slice(0, 6).map((item, itemIndex) => (
-                          <InsightTag key={`${result.id}-matched-${itemIndex}`} tone="cyan">
-                            {item}
-                          </InsightTag>
-                        ))
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No matched skills stored.</p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/50 bg-white/40 p-6 shadow-sm">
-                    <p className="font-heading text-sm font-semibold text-foreground">Missing skills</p>
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      {result.missing_skills.length > 0 ? (
-                        result.missing_skills.slice(0, 6).map((item, itemIndex) => (
-                          <InsightTag key={`${result.id}-missing-${itemIndex}`} tone="slate">
-                            {item}
-                          </InsightTag>
-                        ))
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No missing skills stored.</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  </>
+                )}
               </motion.div>
             ))}
             </AnimatePresence>

@@ -6,9 +6,7 @@ from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
-BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-DEFAULT_DATABASE_PATH = os.path.join(BACKEND_DIR, "screening.db").replace("\\", "/")
-DEFAULT_DATABASE_URL = f"sqlite:///{DEFAULT_DATABASE_PATH}"
+DEFAULT_DATABASE_URL = "postgresql://postgres:postgres@db:5432/ai_screening"
 DEFAULT_CORS_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -54,7 +52,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     DATABASE_URL: str = DEFAULT_DATABASE_URL
-    UPLOAD_DIR: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
+    UPLOAD_DIR: str = "/app/uploads"
 
     AI_PROVIDER: str = "openai"
 
@@ -133,7 +131,7 @@ class Settings(BaseSettings):
         return parsed
 
     class Config:
-        env_file = os.path.join(BACKEND_DIR, ".env")
+        env_file = ".env"
 
 
 settings = Settings()

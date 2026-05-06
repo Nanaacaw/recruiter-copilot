@@ -118,6 +118,8 @@ class ScreeningResponse(BaseModel):
     id: str
     candidate_id: str
     job_description_id: str
+    status: str = "pending"
+    error_message: Optional[str] = None
     overall_score: float
     skills_score: float
     experience_score: float
@@ -129,6 +131,7 @@ class ScreeningResponse(BaseModel):
     red_flags: list
     matched_skills: list
     missing_skills: list
+    processing_time_seconds: Optional[float] = None
     screening_date: datetime
     candidate: Optional[CandidateResponse] = None
 

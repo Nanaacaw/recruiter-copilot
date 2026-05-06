@@ -105,6 +105,9 @@ export interface Screening {
   id: string;
   candidate_id: string;
   job_description_id: string;
+  status: "pending" | "completed" | "failed";
+  error_message?: string;
+  processing_time_seconds?: number;
   overall_score: number;
   skills_score: number;
   experience_score: number;

@@ -19,10 +19,16 @@ backend/.env
 frontend/.env
 frontend/.env.local
 
-# Databases and uploads
+# Databases, uploads, and docker volumes
 *.db
+*.db-shm
+*.db-wal
+postgres_data/
 backend/uploads/
 backend/app/uploads/
+
+# Test/sample data (contains personal CVs)
+CV-Testing/
 
 # Frontend build artifacts
 frontend/node_modules/
@@ -44,3 +50,10 @@ Thumbs.db
 .vscode/
 .agents/
 .repo-backups/
+skills-lock.json
+CLAUDE.md
+AGENTS.md
+*.tsbuildinfo
+
+# Docker
+*.dockerignore
