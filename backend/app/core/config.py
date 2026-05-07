@@ -49,7 +49,7 @@ def _parse_env_list(value: Any, fallback: list[str]) -> Any:
 class Settings(BaseSettings):
     APP_NAME: str = "AI Screening Copilot"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    DEBUG: bool = False
 
     DATABASE_URL: str = DEFAULT_DATABASE_URL
     UPLOAD_DIR: str = "/app/uploads"

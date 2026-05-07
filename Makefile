@@ -6,7 +6,8 @@ SHELL := powershell.exe
 
 .PHONY: help dev setup setup-backend setup-frontend lint \
         docker-up docker-down docker-build docker-logs docker-ps \
-        tunnel-up tunnel-down tunnel-logs health
+        tunnel-up tunnel-down tunnel-logs health \
+        db-backup db-restore
 
 help:
 > @Write-Host "AI Screening Copilot shortcuts:" -ForegroundColor Cyan
@@ -29,6 +30,10 @@ help:
 > @Write-Host "  make tunnel-logs      Follow cloudflared logs"
 > @Write-Host ""
 > @Write-Host "  make health           Quick local health check"
+> @Write-Host ""
+> @Write-Host "  --- Database ---"
+> @Write-Host "  make db-backup        Backup PostgreSQL database"
+> @Write-Host "  make db-restore       Show restore usage info"
 
 # ── Local Dev ─────────────────────────────────────────────────────────────────
 
@@ -82,3 +87,11 @@ tunnel-logs:
 health:
 > @curl.exe -sS http://localhost:8000/api/health
 > @curl.exe -sS -o NUL -w "frontend http status: %{http_code}`n" http://localhost:3000
+
+# ── Database Backup / Restore ───────────────────────────────────────────────
+
+db-backup:
+> @& "scripts\backup-db.ps1"
+
+db-restore:
+> @Write-Host "Usage: make db-restore BACKUP_FILE=backups\ai_screening_YYYYMMDD_HHmmss.sql" -ForegroundColor Yellow

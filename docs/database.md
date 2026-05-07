@@ -198,3 +198,16 @@ There was previously a risk of two SQLite files being used:
 - `backend/screening.db`
 
 The active runtime now targets `backend/screening.db`. If older data exists in the root file, treat it as legacy local state unless you intentionally migrate it.
+
+---
+
+## Schema Migrations
+
+All schema changes must go through Alembic migration files. Do **not** run raw `ALTER TABLE` manually.
+
+See [database-migrations.md](./database-migrations.md) for the full workflow:
+
+- How to add a new column
+- Autogenerate vs manual migration
+- Apply and rollback commands
+- Troubleshooting (hostname, env var, missing packages)

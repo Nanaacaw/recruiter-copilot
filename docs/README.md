@@ -12,6 +12,8 @@ This folder contains the operational and technical documentation for `ai_screeni
   User journeys and backend request/processing flows from upload to export.
 - [database.md](./database.md)
   Database schema, relationships, JSON fields, and storage notes.
+- [database-migrations.md](./database-migrations.md)
+  Alembic migration workflow: add columns, autogenerate, rollback, and troubleshooting.
 - [api-reference.md](./api-reference.md)
   REST endpoints exposed by the FastAPI backend.
 - [ai-integration.md](./ai-integration.md)

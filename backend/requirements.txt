@@ -16,3 +16,4 @@ httpx==0.25.2
 google-generativeai==0.3.2
 openai==1.12.0
 anthropic==0.18.0
+alembic==1.13.1
